@@ -1,3 +1,4 @@
+import { randomBytes } from "crypto";
 import { PrismaClient } from "@prisma/client";
 
 const db = new PrismaClient();
@@ -18,7 +19,7 @@ async function main() {
   await db.family.deleteMany();
 
   const family = await db.family.create({
-    data: { name: "Our Family" },
+    data: { name: "Our Family", inviteToken: randomBytes(4).toString("hex") },
   });
 
   const members = await Promise.all(

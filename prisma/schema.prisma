@@ -18,7 +18,7 @@ model Family {
   name      String
   createdAt DateTime       @default(now())
   // Token used in invite links: outingplanner.app/join/<inviteToken>
-  inviteToken String       @unique @default(cuid())
+  inviteToken String       @unique
 
   members FamilyMember[]
   items   Item[]
