@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { Plus, Search, X, ChevronDown, LogOut } from "lucide-react";
+import { useState } from "react";
+import { Plus, Search, X } from "lucide-react";
 import { Avatar } from "./Avatar";
 import { useFamily } from "./FamilyContext";
 import { InviteButton } from "./InviteButton";
-import { pickMember } from "@/app/actions";
 
 export function Header({
   search,
@@ -18,22 +17,9 @@ export function Header({
   onAdd: () => void;
   inviteToken: string;
 }) {
-  const { members, memberById, viewerId } = useFamily();
+  const { memberById, viewerId } = useFamily();
   const viewer = memberById[viewerId];
   const [mobileSearch, setMobileSearch] = useState(false);
-  const [userMenu, setUserMenu] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!userMenu) return;
-    const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setUserMenu(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [userMenu]);
 
   return (
     <header className="sticky top-0 z-30 bg-cream/85 backdrop-blur-md border-b border-line">
@@ -81,66 +67,12 @@ export function Header({
             {mobileSearch ? <X size={15} /> : <Search size={15} />}
           </button>
 
-          {/* User menu */}
           {viewer && (
-            <div className="relative" ref={menuRef}>
-              <button
-                type="button"
-                onClick={() => setUserMenu(!userMenu)}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-cream-raised border border-line hover:border-line-strong transition"
-              >
-                <Avatar member={viewer} size={22} />
-                <span className="text-xs text-ink-soft font-medium hidden sm:inline">
-                  {viewer.name}
-                </span>
-                <ChevronDown
-                  size={13}
-                  className={`text-ink-mute transition ${userMenu ? "rotate-180" : ""}`}
-                />
-              </button>
-
-              {userMenu && (
-                <div className="absolute right-0 top-full z-20 mt-2 w-56 rounded-2xl bg-cream-raised border border-line shadow-[0_18px_48px_-24px_rgba(42,38,32,0.22)] overflow-hidden animate-fade-in">
-                  <div className="px-3.5 py-2.5 border-b border-line">
-                    <div className="text-[11px] uppercase tracking-[0.16em] text-ink-mute font-semibold">
-                      Signed in as
-                    </div>
-                    <div className="text-sm font-medium mt-0.5">
-                      {viewer.name}
-                    </div>
-                  </div>
-                  <div className="py-1.5">
-                    <div className="px-3.5 py-1.5 text-[11px] uppercase tracking-[0.16em] text-ink-mute font-semibold">
-                      Switch to
-                    </div>
-                    {members
-                      .filter((m) => m.id !== viewerId)
-                      .map((m) => (
-                        <button
-                          key={m.id}
-                          type="button"
-                          onClick={async () => {
-                            setUserMenu(false);
-                            await pickMember(m.id);
-                          }}
-                          className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-left hover:bg-cream transition"
-                        >
-                          <Avatar member={m} size={22} />
-                          {m.name}
-                        </button>
-                      ))}
-                  </div>
-                  <div className="border-t border-line py-1.5">
-                    <a
-                      href="/reset"
-                      className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-ink-soft hover:text-ink hover:bg-cream transition"
-                    >
-                      <LogOut size={14} />
-                      Sign out
-                    </a>
-                  </div>
-                </div>
-              )}
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-cream-raised border border-line">
+              <Avatar member={viewer} size={22} />
+              <span className="text-xs text-ink-soft font-medium hidden sm:inline">
+                {viewer.name}
+              </span>
             </div>
           )}
 
