@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import {
   addMonths,
   eachDayOfInterval,
@@ -15,10 +15,20 @@ import {
   startOfWeek,
   subMonths,
 } from "date-fns";
-import { ChevronLeft, ChevronRight, Heart, MapPin, Plus } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  DollarSign,
+  Heart,
+  MapPin,
+  Pencil,
+  Plus,
+  X,
+} from "lucide-react";
 import type { Item } from "@/lib/types";
-import { CATEGORY_BY_KEY } from "@/lib/taxonomy";
-import { AvatarStack } from "./Avatar";
+import { CATEGORY_BY_KEY, COST_BY_KEY, TIME_BY_KEY } from "@/lib/taxonomy";
+import { Avatar, AvatarStack } from "./Avatar";
 import { useFamily } from "./FamilyContext";
 
 export function CalendarView({
@@ -35,6 +45,7 @@ export function CalendarView({
   const { memberById, viewerId } = useFamily();
   const [cursor, setCursor] = useState(() => new Date());
   const [selected, setSelected] = useState<Date | null>(null);
+  const [previewItem, setPreviewItem] = useState<Item | null>(null);
 
   const monthStart = startOfMonth(cursor);
   const monthEnd = endOfMonth(cursor);
@@ -190,16 +201,16 @@ export function CalendarView({
                 return (
                   <li
                     key={it.id}
-                    onClick={() => onEdit(it)}
+                    onClick={() => setPreviewItem(it)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
-                        onEdit(it);
+                        setPreviewItem(it);
                       }
                     }}
                     role="button"
                     tabIndex={0}
-                    aria-label={`Edit ${it.title}`}
+                    aria-label={`View ${it.title}`}
                     className="rounded-2xl border border-line bg-cream/60 p-3.5 cursor-pointer hover:border-line-strong transition focus:outline-none focus-visible:ring-2 focus-visible:ring-ink/30"
                   >
                     <div
@@ -260,8 +271,204 @@ export function CalendarView({
           </button>
         </aside>
       </div>
+
+      {previewItem && (
+        <ItemPreview
+          item={previewItem}
+          onClose={() => setPreviewItem(null)}
+          onEdit={() => {
+            setPreviewItem(null);
+            onEdit(previewItem);
+          }}
+          onToggleInterested={() => onToggleInterested(previewItem.id)}
+          memberById={memberById}
+          viewerId={viewerId}
+        />
+      )}
     </div>
   );
+}
+
+function ItemPreview({
+  item,
+  onClose,
+  onEdit,
+  onToggleInterested,
+  memberById,
+  viewerId,
+}: {
+  item: Item;
+  onClose: () => void;
+  onEdit: () => void;
+  onToggleInterested: () => void;
+  memberById: Record<string, { id: string; name: string; color: string; initial: string }>;
+  viewerId: string;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const cat = CATEGORY_BY_KEY[item.category];
+  const cost = COST_BY_KEY[item.cost];
+  const addedByMember = memberById[item.addedBy];
+  const interestedMembers = item.interestedBy
+    .map((id) => memberById[id])
+    .filter(Boolean);
+  const isInterested = item.interestedBy.includes(viewerId);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-40 flex items-center justify-center p-6">
+      <div
+        className="absolute inset-0 bg-ink/20 backdrop-blur-sm"
+        onClick={onClose}
+        aria-hidden
+      />
+      <div
+        ref={ref}
+        className="relative w-full max-w-md bg-cream-raised rounded-[22px] border border-line shadow-[0_30px_80px_-30px_rgba(42,38,32,0.35)] animate-fade-in overflow-hidden"
+        role="dialog"
+        aria-modal
+      >
+        {/* Category header */}
+        <div className={`${cat.tint} px-5 pt-4 pb-3 flex items-start justify-between`}>
+          <div>
+            <div
+              className={`inline-flex items-center gap-1.5 ${cat.ink} text-[11px] font-medium mb-1.5`}
+            >
+              <span className="text-sm">{cat.emoji}</span>
+              {cat.label}
+            </div>
+            <h3 className={`font-display text-xl leading-tight ${cat.ink}`}>
+              {item.title}
+            </h3>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className={`h-7 w-7 rounded-full inline-flex items-center justify-center ${cat.ink} opacity-60 hover:opacity-100 transition`}
+            aria-label="Close"
+          >
+            <X size={15} />
+          </button>
+        </div>
+
+        {/* Details */}
+        <div className="px-5 py-4 space-y-3">
+          {item.date && (
+            <DetailRow icon={<Clock size={14} />}>
+              {formatDateRange(item.date, item.endDate)}
+              {item.timeOfDay.length > 0 && (
+                <span className="text-ink-mute">
+                  {" "}· {item.timeOfDay.map((t) => TIME_BY_KEY[t]?.label).join(", ")}
+                </span>
+              )}
+            </DetailRow>
+          )}
+
+          {item.location && (
+            <DetailRow icon={<MapPin size={14} />}>
+              {item.location}
+            </DetailRow>
+          )}
+
+          <DetailRow icon={<DollarSign size={14} />}>
+            {cost.label}
+          </DetailRow>
+
+          {item.notes && (
+            <p className="text-sm text-ink-soft leading-relaxed pt-1">
+              {item.notes}
+            </p>
+          )}
+
+          {/* Interested members */}
+          <div className="pt-2 flex items-center gap-3">
+            {interestedMembers.length > 0 ? (
+              <div className="flex items-center gap-2">
+                <AvatarStack members={interestedMembers} size={24} max={6} />
+                <span className="text-xs text-ink-soft">
+                  {interestedMembers.length} interested
+                </span>
+              </div>
+            ) : (
+              <span className="text-xs text-ink-mute">No one interested yet</span>
+            )}
+          </div>
+
+          {addedByMember && (
+            <div className="flex items-center gap-1.5 text-[11px] text-ink-mute">
+              <Avatar member={addedByMember} size={16} />
+              Added by {addedByMember.name}
+            </div>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="px-5 pb-4 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleInterested();
+            }}
+            className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-full py-2.5 text-sm font-medium border transition ${
+              isInterested
+                ? "bg-[#FDE3E3] border-[#F2B9B9] text-[#B93636]"
+                : "bg-cream border-line text-ink-soft hover:border-line-strong hover:text-ink"
+            }`}
+          >
+            <Heart
+              size={14}
+              strokeWidth={2.2}
+              className={isInterested ? "fill-current" : ""}
+            />
+            {isInterested ? "Interested" : "Mark interested"}
+          </button>
+          <button
+            type="button"
+            onClick={onEdit}
+            className="inline-flex items-center justify-center gap-1.5 rounded-full bg-ink text-cream-raised py-2.5 px-5 text-sm font-medium hover:opacity-90 transition"
+          >
+            <Pencil size={13} strokeWidth={2.2} />
+            Edit
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DetailRow({
+  icon,
+  children,
+}: {
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-start gap-2.5 text-sm text-ink">
+      <span className="text-ink-mute mt-0.5 shrink-0">{icon}</span>
+      <span>{children}</span>
+    </div>
+  );
+}
+
+function formatDateRange(startIso: string, endIso?: string) {
+  const start = parseISO(startIso);
+  if (!endIso || endIso === startIso) {
+    return format(start, "EEE, MMM d");
+  }
+  const end = parseISO(endIso);
+  if (isSameDay(start, end)) return format(start, "EEE, MMM d");
+  if (isSameMonth(start, end)) {
+    return `${format(start, "MMM d")} – ${format(end, "d")}`;
+  }
+  return `${format(start, "MMM d")} – ${format(end, "MMM d")}`;
 }
 
 function toIso(d: Date) {
