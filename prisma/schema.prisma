@@ -1,0 +1,88 @@
+// Prisma schema for Outing Planner.
+// Generate the client with `npx prisma generate`.
+// Run migrations with `npx prisma migrate dev --name <change>`.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// One household / shared workspace.
+model Family {
+  id        String         @id @default(cuid())
+  name      String
+  createdAt DateTime       @default(now())
+  // Token used in invite links: outingplanner.app/join/<inviteToken>
+  inviteToken String       @unique @default(cuid())
+
+  members FamilyMember[]
+  items   Item[]
+}
+
+// People in the family. No password — joined via family invite link
+// then identified by a long-lived cookie on each device.
+model FamilyMember {
+  id        String   @id @default(cuid())
+  family    Family   @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  familyId  String
+  name      String
+  initial   String
+  // Hex color for their avatar tile.
+  color     String
+  // Optional flag for parents/organizers (delete permissions etc.)
+  isOrganizer Boolean @default(false)
+  createdAt DateTime @default(now())
+
+  addedItems Item[]      @relation("AddedBy")
+  interests  Interest[]
+
+  @@index([familyId])
+}
+
+model Item {
+  id              String   @id @default(cuid())
+  family          Family   @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  familyId        String
+  title           String
+  // CategoryKey from lib/types.ts — kept as string so taxonomy can grow without migrations.
+  category        String
+  // "evergreen" | "dated"
+  kind            String
+  // ISO date (YYYY-MM-DD) when kind = dated.
+  date            String?
+  endDate         String?
+  // CSV of TimeOfDay values: "morning,afternoon".
+  timeOfDay       String
+  // CostTier from lib/types.ts.
+  cost            String
+  pricePerPerson  Int?
+  location        String?
+  notes           String?
+  addedBy         FamilyMember @relation("AddedBy", fields: [addedById], references: [id], onDelete: Restrict)
+  addedById       String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  interests Interest[]
+
+  @@index([familyId])
+  @@index([date])
+}
+
+// Composite "X is interested in Y" join — toggling adds/removes a row.
+model Interest {
+  id        String       @id @default(cuid())
+  item      Item         @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  itemId    String
+  member    FamilyMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId  String
+  createdAt DateTime     @default(now())
+
+  @@unique([itemId, memberId])
+  @@index([memberId])
+}
