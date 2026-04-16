@@ -256,7 +256,7 @@ export function FilterBar({
 
         <div className="ml-auto text-xs text-ink-mute">
           {filteredCount === totalCount
-            ? `${totalCount} ideas`
+            ? `${totalCount} ${totalCount === 1 ? "idea" : "ideas"}`
             : `${filteredCount} of ${totalCount}`}
         </div>
       </div>
