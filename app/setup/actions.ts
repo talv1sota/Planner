@@ -13,7 +13,13 @@ export async function createFamily(data: {
   familyName: string;
   memberName: string;
   color: string;
-}) {
+  inviteCode: string;
+}): Promise<{ error: string } | undefined> {
+  const validCode = process.env.INVITE_CODE;
+  if (!validCode || data.inviteCode !== validCode) {
+    return { error: "Invalid invite code." };
+  }
+
   const family = await db.family.create({
     data: { name: data.familyName.trim(), inviteToken: generateInviteCode() },
   });
