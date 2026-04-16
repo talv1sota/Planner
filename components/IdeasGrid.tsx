@@ -56,7 +56,6 @@ export function IdeasGrid({
   if (totalCount === 0) {
     return (
       <div className="mx-auto max-w-6xl px-6 lg:px-10 py-24 text-center">
-        <div className="text-5xl mb-4">🗺️</div>
         <p className="font-display text-2xl text-ink">
           No outings yet
         </p>
@@ -77,7 +76,6 @@ export function IdeasGrid({
   if (items.length === 0) {
     return (
       <div className="mx-auto max-w-6xl px-6 lg:px-10 py-24 text-center">
-        <div className="text-4xl mb-3">🔍</div>
         <p className="font-display text-xl text-ink-soft">
           No matches
         </p>
