@@ -90,7 +90,7 @@ export function FilterBar({
           {
             kind: "interested" as const,
             key: filters.interested,
-            label: `${members.find((f) => f.id === filters.interested)?.name ?? ""} is in`,
+            label: `${members.find((f) => f.id === filters.interested)?.name ?? ""} interested`,
             onRemove: () => update({ interested: "any" }),
           },
         ]
@@ -198,8 +198,8 @@ export function FilterBar({
         <FilterPill
           label={
             filters.interested === "any"
-              ? "Who's in"
-              : `${members.find((f) => f.id === filters.interested)?.name} is in`
+              ? "Interested"
+              : `${members.find((f) => f.id === filters.interested)?.name} interested`
           }
           active={filters.interested !== "any"}
           open={open === "interested"}
