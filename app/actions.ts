@@ -2,13 +2,21 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { getViewerId, setViewerId } from "@/lib/viewer";
+import { getFamilyToken, getViewerId, setViewerId } from "@/lib/viewer";
 
 async function requireViewer() {
   const id = await getViewerId();
   if (!id) throw new Error("Not authenticated");
-  const member = await db.familyMember.findUnique({ where: { id } });
+  const familyToken = await getFamilyToken();
+  if (!familyToken) throw new Error("Not authenticated");
+  const member = await db.familyMember.findUnique({
+    where: { id },
+    include: { family: { select: { inviteToken: true } } },
+  });
   if (!member) throw new Error("Unknown member");
+  if (member.family.inviteToken !== familyToken) {
+    throw new Error("Not authorized");
+  }
   return member;
 }
 
@@ -26,6 +34,17 @@ export async function addNewMember(data: {
   name: string;
   color: string;
 }) {
+  // Verify the caller has a valid family token for this family
+  const familyToken = await getFamilyToken();
+  if (!familyToken) throw new Error("Not authenticated");
+  const family = await db.family.findUnique({
+    where: { id: data.familyId },
+    select: { inviteToken: true },
+  });
+  if (!family || family.inviteToken !== familyToken) {
+    throw new Error("Not authorized");
+  }
+
   const initial = data.name.charAt(0).toUpperCase();
   const member = await db.familyMember.create({
     data: {
@@ -41,10 +60,16 @@ export async function addNewMember(data: {
 }
 
 export async function pickMember(memberId: string) {
+  const familyToken = await getFamilyToken();
+  if (!familyToken) throw new Error("Not authenticated");
   const member = await db.familyMember.findUnique({
     where: { id: memberId },
+    include: { family: { select: { inviteToken: true } } },
   });
   if (!member) throw new Error("Unknown member");
+  if (member.family.inviteToken !== familyToken) {
+    throw new Error("Not authorized");
+  }
   await setViewerId(memberId);
   revalidatePath("/");
 }

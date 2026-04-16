@@ -1,8 +1,13 @@
 import { db } from "./db";
+import { getFamilyToken } from "./viewer";
 import type { Item } from "./types";
 
 export async function getFamily() {
-  const family = await db.family.findFirst({
+  const inviteToken = await getFamilyToken();
+  if (!inviteToken) return null;
+
+  const family = await db.family.findUnique({
+    where: { inviteToken },
     include: {
       members: { orderBy: { createdAt: "asc" } },
     },

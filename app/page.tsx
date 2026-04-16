@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { getFamily, getItems } from "@/lib/queries";
 import { getViewerId } from "@/lib/viewer";
 import { PlannerApp } from "@/components/PlannerApp";
@@ -8,13 +9,7 @@ export const dynamic = "force-dynamic";
 export default async function Home() {
   const family = await getFamily();
   if (!family) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-cream p-6">
-        <p className="font-display text-xl text-ink-soft">
-          No family found. Run <code>npx prisma db seed</code> to set up.
-        </p>
-      </div>
-    );
+    redirect("/join");
   }
 
   const viewerId = await getViewerId();
@@ -22,6 +17,7 @@ export default async function Home() {
     viewerId && family.members.some((m) => m.id === viewerId);
 
   if (!validMember) {
+    // Only show the picker for members of THIS family — never expose members to outsiders
     return <MemberPicker members={family.members} familyId={family.id} />;
   }
 
