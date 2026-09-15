@@ -32,6 +32,13 @@ export async function getItems(familyId: string): Promise<Item[]> {
     kind: r.kind as Item["kind"],
     date: r.date ?? undefined,
     endDate: r.endDate ?? undefined,
+    repeatWeekdays: r.repeatWeekdays
+      ? (r.repeatWeekdays.split(",") as Item["repeatWeekdays"])
+      : undefined,
+    repeatDates: r.repeatDates ? r.repeatDates.split(",") : undefined,
+    excludeDates: r.excludeDates ? r.excludeDates.split(",") : undefined,
+    startTime: r.startTime ?? undefined,
+    endTime: r.endTime ?? undefined,
     timeOfDay: r.timeOfDay.split(",") as Item["timeOfDay"],
     cost: r.cost as Item["cost"],
     pricePerPerson: r.pricePerPerson ?? undefined,
@@ -48,4 +55,13 @@ export async function getMemberMap(familyId: string) {
     orderBy: { createdAt: "asc" },
   });
   return members;
+}
+
+/** Ids (from lib/discoverData.ts) of Discover events this family has already added. */
+export async function getDiscoveredAddedIds(familyId: string): Promise<string[]> {
+  const rows = await db.discoveredAdd.findMany({
+    where: { familyId },
+    select: { discoveredId: true },
+  });
+  return rows.map((r) => r.discoveredId);
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutGrid, Calendar } from "lucide-react";
+import { LayoutGrid, Calendar, Compass } from "lucide-react";
 import type { View } from "@/lib/types";
 
 export function ViewToggle({
@@ -13,6 +13,7 @@ export function ViewToggle({
   const tabs: { key: View; label: string; icon: React.ReactNode }[] = [
     { key: "ideas", label: "Ideas", icon: <LayoutGrid size={15} /> },
     { key: "calendar", label: "Calendar", icon: <Calendar size={15} /> },
+    { key: "discover", label: "Discover", icon: <Compass size={15} /> },
   ];
   return (
     <div className="inline-flex items-center rounded-full bg-cream-raised border border-line p-1">

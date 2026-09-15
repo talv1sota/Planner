@@ -23,6 +23,13 @@ export const CATEGORIES: Category[] = [
     ink: "text-[#8C2B2B]",
   },
   {
+    key: "markets",
+    label: "Markets",
+    emoji: "🧺",
+    tint: "bg-[#F0E5C9]",
+    ink: "text-[#6B5A23]",
+  },
+  {
     key: "themeparks",
     label: "Theme Parks",
     emoji: "🎢",
@@ -79,6 +86,20 @@ export const CATEGORIES: Category[] = [
     ink: "text-[#7A3F14]",
   },
   {
+    key: "clubs",
+    label: "Clubs & Groups",
+    emoji: "🤝",
+    tint: "bg-[#CFEDE3]",
+    ink: "text-[#1F5C4C]",
+  },
+  {
+    key: "errands",
+    label: "Appointments & Errands",
+    emoji: "📋",
+    tint: "bg-[#E2E6EC]",
+    ink: "text-[#40495A]",
+  },
+  {
     key: "other",
     label: "Other",
     emoji: "✨",
@@ -97,10 +118,10 @@ export const COST_TIERS: {
   shortLabel: string;
 }[] = [
   { key: "free", label: "Free", shortLabel: "Free" },
-  { key: "under10", label: "Under $10 / person", shortLabel: "< $10" },
-  { key: "10to25", label: "$10 – $25 / person", shortLabel: "$10–25" },
-  { key: "25to50", label: "$25 – $50 / person", shortLabel: "$25–50" },
-  { key: "50plus", label: "$50+ / person", shortLabel: "$50+" },
+  { key: "under10", label: "Under €10 / person", shortLabel: "< €10" },
+  { key: "10to25", label: "€10 – €25 / person", shortLabel: "€10–25" },
+  { key: "25to50", label: "€25 – €50 / person", shortLabel: "€25–50" },
+  { key: "50plus", label: "€50+ / person", shortLabel: "€50+" },
 ];
 
 export const COST_BY_KEY = Object.fromEntries(

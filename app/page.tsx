@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getFamily, getItems } from "@/lib/queries";
+import { getFamily, getItems, getDiscoveredAddedIds } from "@/lib/queries";
 import { getViewerId } from "@/lib/viewer";
 import { PlannerApp } from "@/components/PlannerApp";
 import { MemberPicker } from "@/components/MemberPicker";
@@ -21,7 +21,10 @@ export default async function Home() {
     return <MemberPicker members={family.members} familyId={family.id} />;
   }
 
-  const items = await getItems(family.id);
+  const [items, addedDiscoverIds] = await Promise.all([
+    getItems(family.id),
+    getDiscoveredAddedIds(family.id),
+  ]);
 
   return (
     <PlannerApp
@@ -31,6 +34,7 @@ export default async function Home() {
       familyId={family.id}
       familyName={family.name}
       inviteToken={family.inviteToken}
+      addedDiscoverIds={addedDiscoverIds}
     />
   );
 }

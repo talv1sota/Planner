@@ -22,6 +22,7 @@ model Family {
 
   members FamilyMember[]
   items   Item[]
+  discoveredAdds DiscoveredAdd[]
 }
 
 // People in the family. No password — joined via family invite link
@@ -56,8 +57,22 @@ model Item {
   // ISO date (YYYY-MM-DD) when kind = dated.
   date            String?
   endDate         String?
+  // CSV of weekday keys ("mon".."sun"). When set, this dated item repeats
+  // weekly on these weekdays starting at `date`, with no end (permanent)
+  // until deleted or edited.
+  repeatWeekdays  String?
+  // CSV of explicit ISO dates, for irregular-but-known schedules (e.g. a
+  // market that runs specific Sundays). Alternative to repeatWeekdays.
+  repeatDates     String?
+  // CSV of ISO dates to skip for a repeating item (e.g. a sick day), without
+  // deleting the whole series.
+  excludeDates    String?
   // CSV of TimeOfDay values: "morning,afternoon".
   timeOfDay       String
+  // Optional specific clock time (HH:MM, 24h), alongside the coarse
+  // timeOfDay tag used for filtering. endTime is optional too.
+  startTime       String?
+  endTime         String?
   // CostTier from lib/types.ts.
   cost            String
   pricePerPerson  Int?
@@ -69,9 +84,27 @@ model Item {
   updatedAt       DateTime @updatedAt
 
   interests Interest[]
+  discoveredAdd DiscoveredAdd?
 
   @@index([familyId])
   @@index([date])
+}
+
+// Tracks which curated "Discover" events (content lives in code, at
+// lib/discoverData.ts, keyed by DiscoverEvent.id) a family has already
+// added to their own list, so the Discover feed can show "Added" state
+// and adding twice just links back to the existing Item.
+model DiscoveredAdd {
+  id           String       @id @default(cuid())
+  family       Family       @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  familyId     String
+  discoveredId String
+  item         Item         @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  itemId       String       @unique
+  createdAt    DateTime     @default(now())
+
+  @@unique([familyId, discoveredId])
+  @@index([familyId])
 }
 
 // Composite "X is interested in Y" join — toggling adds/removes a row.

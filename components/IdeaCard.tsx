@@ -1,6 +1,6 @@
 "use client";
 
-import { MapPin, CalendarDays, Heart } from "lucide-react";
+import { MapPin, CalendarDays, Heart, Repeat, Clock } from "lucide-react";
 import { format, parseISO, isSameDay, isSameMonth } from "date-fns";
 import type { Item } from "@/lib/types";
 import { CATEGORY_BY_KEY, COST_BY_KEY, TIME_BY_KEY } from "@/lib/taxonomy";
@@ -59,6 +59,9 @@ export function IdeaCard({
     .map((id) => memberById[id])
     .filter(Boolean);
   const isInterested = item.interestedBy.includes(viewerId);
+  const hideInterest =
+    item.category === "errands" ||
+    !!(item.repeatWeekdays?.length || item.repeatDates?.length);
 
   return (
     <article
@@ -81,9 +84,11 @@ export function IdeaCard({
           <span>{category.emoji}</span>
           {category.label}
         </div>
-        <div className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-cream-raised/90 backdrop-blur px-2.5 py-1 text-[11px] font-semibold text-ink">
-          {cost.shortLabel}
-        </div>
+        {item.category !== "errands" && (
+          <div className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-cream-raised/90 backdrop-blur px-2.5 py-1 text-[11px] font-semibold text-ink">
+            {cost.shortLabel}
+          </div>
+        )}
       </div>
 
       <div className="flex-1 flex flex-col gap-3 p-4">
@@ -93,10 +98,32 @@ export function IdeaCard({
           </h3>
 
           <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-ink-soft">
-            {item.kind === "dated" && item.date && (
+            {item.repeatWeekdays?.length ? (
               <span className="inline-flex items-center gap-1">
-                <CalendarDays size={13} className="text-ink-mute" />
-                {formatDateRange(item.date, item.endDate)}
+                <Repeat size={13} className="text-ink-mute" />
+                {formatWeekdays(item.repeatWeekdays)}
+              </span>
+            ) : item.repeatDates?.length ? (
+              <span className="inline-flex items-center gap-1">
+                <Repeat size={13} className="text-ink-mute" />
+                Next {format(parseISO(item.repeatDates[0]), "MMM d")}
+                {item.repeatDates.length > 1 &&
+                  ` (+${item.repeatDates.length - 1} more)`}
+              </span>
+            ) : (
+              item.kind === "dated" &&
+              item.date && (
+                <span className="inline-flex items-center gap-1">
+                  <CalendarDays size={13} className="text-ink-mute" />
+                  {formatDateRange(item.date, item.endDate)}
+                </span>
+              )
+            )}
+            {item.startTime && (
+              <span className="inline-flex items-center gap-1">
+                <Clock size={13} className="text-ink-mute" />
+                {item.startTime}
+                {item.endTime && `–${item.endTime}`}
               </span>
             )}
             {item.location && (
@@ -136,45 +163,69 @@ export function IdeaCard({
               Added by {addedByMember.name}
             </div>
           )}
-          <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {interestedMembers.length > 0 ? (
-              <>
-                <AvatarStack members={interestedMembers} size={22} max={4} />
-                <span className="text-xs text-ink-soft">
-                  {interestedMembers.length} interested
-                </span>
-              </>
-            ) : (
-              <span className="text-xs text-ink-mute">No one yet</span>
-            )}
-          </div>
+          {!hideInterest && (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {interestedMembers.length > 0 ? (
+                  <>
+                    <AvatarStack members={interestedMembers} size={22} max={4} />
+                    <span className="text-xs text-ink-soft">
+                      {interestedMembers.length} interested
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-xs text-ink-mute">No one yet</span>
+                )}
+              </div>
 
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleInterested(item.id);
-            }}
-            aria-pressed={isInterested}
-            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium border transition ${
-              isInterested
-                ? "bg-[#FDE3E3] border-[#F2B9B9] text-[#B93636]"
-                : "bg-cream-raised border-line text-ink-soft hover:border-line-strong hover:text-ink"
-            }`}
-          >
-            <Heart
-              size={13}
-              strokeWidth={2.2}
-              className={isInterested ? "fill-current" : ""}
-            />
-            Interested
-          </button>
-          </div>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleInterested(item.id);
+                }}
+                aria-pressed={isInterested}
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium border transition ${
+                  isInterested
+                    ? "bg-[#FDE3E3] border-[#F2B9B9] text-[#B93636]"
+                    : "bg-cream-raised border-line text-ink-soft hover:border-line-strong hover:text-ink"
+                }`}
+              >
+                <Heart
+                  size={13}
+                  strokeWidth={2.2}
+                  className={isInterested ? "fill-current" : ""}
+                />
+                Interested
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </article>
   );
+}
+
+const WEEKDAY_LABELS: Record<string, string> = {
+  mon: "Mon",
+  tue: "Tue",
+  wed: "Wed",
+  thu: "Thu",
+  fri: "Fri",
+  sat: "Sat",
+  sun: "Sun",
+};
+const WEEKDAY_ORDER = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+
+function formatWeekdays(days: string[]): string {
+  const ordered = WEEKDAY_ORDER.filter((d) => days.includes(d));
+  const weekdaySet = ["mon", "tue", "wed", "thu", "fri"];
+  if (ordered.length === 5 && weekdaySet.every((d) => days.includes(d))) {
+    return "Every weekday";
+  }
+  if (ordered.length === 7) return "Every day";
+  if (ordered.length === 1) return `Every ${WEEKDAY_LABELS[ordered[0]]}`;
+  return `Every ${ordered.map((d) => WEEKDAY_LABELS[d]).join("/")}`;
 }
 
 function formatDateRange(startIso: string, endIso?: string) {

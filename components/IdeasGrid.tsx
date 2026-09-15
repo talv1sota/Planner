@@ -1,30 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { ArrowUpDown } from "lucide-react";
-import type { Item, SortKey } from "@/lib/types";
+import type { Item } from "@/lib/types";
 import { IdeaCard } from "./IdeaCard";
-
-const SORT_OPTIONS: { key: SortKey; label: string }[] = [
-  { key: "newest", label: "Newest first" },
-  { key: "alphabetical", label: "A – Z" },
-  { key: "soonest", label: "Soonest date" },
-  { key: "popular", label: "Most popular" },
-];
-
-function sortItems(items: Item[], sort: SortKey): Item[] {
-  const sorted = [...items];
-  switch (sort) {
-    case "newest":
-      return sorted; // already ordered by createdAt desc from server
-    case "alphabetical":
-      return sorted.sort((a, b) => a.title.localeCompare(b.title));
-    case "soonest":
-      return sorted.sort((a, b) => (a.date ?? "9").localeCompare(b.date ?? "9"));
-    case "popular":
-      return sorted.sort((a, b) => b.interestedBy.length - a.interestedBy.length);
-  }
-}
 
 export function IdeasGrid({
   items,
@@ -32,26 +9,24 @@ export function IdeasGrid({
   onEdit,
   totalCount,
   onAdd,
-  sort,
-  onSortChange,
 }: {
   items: Item[];
   onToggleInterested: (id: string) => void;
   onEdit: (item: Item) => void;
   totalCount: number;
   onAdd: () => void;
-  sort: SortKey;
-  onSortChange: (s: SortKey) => void;
 }) {
-  const [sortOpen, setSortOpen] = useState(false);
-
-  const sorted = useMemo(() => sortItems(items, sort), [items, sort]);
-  const dated = sorted
-    .filter((i) => i.kind === "dated")
-    .sort((a, b) =>
-      sort === "soonest" ? 0 : (a.date ?? "").localeCompare(b.date ?? ""),
-    );
-  const evergreen = sorted.filter((i) => i.kind === "evergreen");
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const isRepeating = (i: Item) =>
+    !!(i.repeatWeekdays?.length || i.repeatDates?.length);
+  const dated = items
+    .filter(
+      (i) =>
+        i.kind === "dated" &&
+        !isRepeating(i) &&
+        (i.endDate ?? i.date ?? "") >= todayIso,
+    )
+    .sort((a, b) => (a.date ?? "").localeCompare(b.date ?? ""));
 
   if (totalCount === 0) {
     return (
@@ -87,69 +62,16 @@ export function IdeasGrid({
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-6 lg:px-10 pb-24 space-y-12">
-      <div className="flex justify-end">
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setSortOpen(!sortOpen)}
-            className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-medium bg-cream-raised border border-line hover:border-line-strong transition"
-          >
-            <ArrowUpDown size={14} className="text-ink-mute" />
-            {SORT_OPTIONS.find((o) => o.key === sort)?.label}
-          </button>
-          {sortOpen && (
-            <>
-              <div
-                className="fixed inset-0 z-10"
-                onClick={() => setSortOpen(false)}
-                aria-hidden
-              />
-              <div className="absolute right-0 top-full z-20 mt-2 min-w-[180px] rounded-2xl bg-cream-raised border border-line shadow-[0_18px_48px_-24px_rgba(42,38,32,0.22)] overflow-hidden animate-fade-in py-1.5">
-                {SORT_OPTIONS.map((o) => (
-                  <button
-                    key={o.key}
-                    type="button"
-                    onClick={() => {
-                      onSortChange(o.key);
-                      setSortOpen(false);
-                    }}
-                    className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-left hover:bg-cream transition ${
-                      sort === o.key ? "text-ink" : "text-ink-soft"
-                    }`}
-                  >
-                    <span
-                      className={`h-2 w-2 rounded-full ${
-                        sort === o.key ? "bg-accent" : "bg-line-strong"
-                      }`}
-                    />
-                    {o.label}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-
-      {dated.length > 0 && (
-        <Section
-          eyebrow="On the calendar"
-          title="Coming up"
-          subtitle="Dated plans, soonest first"
-        >
+    <div className="mx-auto max-w-6xl px-6 lg:px-10 pb-24">
+      <Section eyebrow="On the calendar" title="Coming up">
+        {dated.length > 0 ? (
           <Grid items={dated} onToggleInterested={onToggleInterested} onEdit={onEdit} />
-        </Section>
-      )}
-      {evergreen.length > 0 && (
-        <Section
-          eyebrow="Anytime"
-          title="Ideas to come back to"
-          subtitle="Evergreen favorites and wish-list picks"
-        >
-          <Grid items={evergreen} onToggleInterested={onToggleInterested} onEdit={onEdit} />
-        </Section>
-      )}
+        ) : (
+          <p className="text-sm text-ink-mute">
+            Nothing one-off coming up. Repeating things live on the Calendar tab.
+          </p>
+        )}
+      </Section>
     </div>
   );
 }

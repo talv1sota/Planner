@@ -2,10 +2,20 @@
 
 import { useEffect, useState } from "react";
 import { Trash2, X } from "lucide-react";
-import type { CategoryKey, CostTier, Item, TimeOfDay } from "@/lib/types";
+import type { CategoryKey, CostTier, Item, TimeOfDay, Weekday } from "@/lib/types";
 import { CATEGORIES, COST_TIERS, TIMES } from "@/lib/taxonomy";
 import { useFamily } from "./FamilyContext";
 import { Avatar } from "./Avatar";
+
+const WEEKDAY_OPTIONS: { key: Weekday; label: string }[] = [
+  { key: "mon", label: "Mon" },
+  { key: "tue", label: "Tue" },
+  { key: "wed", label: "Wed" },
+  { key: "thu", label: "Thu" },
+  { key: "fri", label: "Fri" },
+  { key: "sat", label: "Sat" },
+  { key: "sun", label: "Sun" },
+];
 
 export function ItemSheet({
   open,
@@ -33,9 +43,15 @@ export function ItemSheet({
     initial?.kind ?? (defaultDate ? "dated" : "evergreen"),
   );
   const [date, setDate] = useState(initial?.date ?? defaultDate ?? "");
+  const [repeatOn, setRepeatOn] = useState(!!initial?.repeatWeekdays?.length);
+  const [repeatDays, setRepeatDays] = useState<Set<Weekday>>(
+    new Set(initial?.repeatWeekdays ?? []),
+  );
   const [times, setTimes] = useState<Set<TimeOfDay>>(
     new Set(initial?.timeOfDay ?? (["afternoon"] as TimeOfDay[])),
   );
+  const [startTime, setStartTime] = useState(initial?.startTime ?? "");
+  const [endTime, setEndTime] = useState(initial?.endTime ?? "");
   const [cost, setCost] = useState<CostTier>(
     (initial?.cost as CostTier) ?? "free",
   );
@@ -60,6 +76,8 @@ export function ItemSheet({
     times.size > 0 &&
     (kind === "evergreen" || date);
 
+  const hasRepeat = kind === "dated" && repeatOn && repeatDays.size > 0;
+
   const submit = () => {
     if (!canSubmit) return;
     const saved: Item = {
@@ -68,8 +86,15 @@ export function ItemSheet({
       category: category,
       kind,
       date: kind === "dated" ? date : undefined,
-      endDate: kind === "dated" ? initial?.endDate : undefined,
+      endDate: kind === "dated" && !hasRepeat ? initial?.endDate : undefined,
+      repeatWeekdays: hasRepeat ? Array.from(repeatDays) : undefined,
+      // No UI to edit an explicit date list yet — carry it through unchanged
+      // as long as we're not turning this into a plain one-off date.
+      repeatDates:
+        kind === "dated" && !repeatOn ? initial?.repeatDates : undefined,
       timeOfDay: Array.from(times),
+      startTime: startTime || undefined,
+      endTime: startTime ? endTime || undefined : undefined,
       cost: cost,
       pricePerPerson: initial?.pricePerPerson,
       location: location.trim() || undefined,
@@ -166,12 +191,49 @@ export function ItemSheet({
               ))}
             </div>
             {kind === "dated" && (
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full rounded-xl bg-cream border border-line px-3.5 py-2.5 text-sm focus:outline-none focus:border-line-strong"
-              />
+              <>
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="w-full rounded-xl bg-cream border border-line px-3.5 py-2.5 text-sm focus:outline-none focus:border-line-strong"
+                />
+                <label className="mt-3 flex items-center gap-2 text-xs text-ink-soft cursor-pointer w-fit">
+                  <input
+                    type="checkbox"
+                    checked={repeatOn}
+                    onChange={(e) => setRepeatOn(e.target.checked)}
+                    className="h-3.5 w-3.5"
+                  />
+                  Repeats weekly
+                </label>
+                {repeatOn && (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {WEEKDAY_OPTIONS.map((w) => {
+                      const active = repeatDays.has(w.key);
+                      return (
+                        <button
+                          key={w.key}
+                          type="button"
+                          onClick={() => {
+                            const next = new Set(repeatDays);
+                            if (next.has(w.key)) next.delete(w.key);
+                            else next.add(w.key);
+                            setRepeatDays(next);
+                          }}
+                          className={`rounded-full px-3 py-1.5 text-xs font-medium border transition ${
+                            active
+                              ? "bg-ink text-cream-raised border-ink"
+                              : "bg-cream border-line text-ink-soft hover:border-line-strong"
+                          }`}
+                        >
+                          {w.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
             )}
           </Field>
 
@@ -201,29 +263,62 @@ export function ItemSheet({
                 );
               })}
             </div>
-          </Field>
-
-          <Field label="Cost">
-            <div className="flex flex-wrap gap-1.5">
-              {COST_TIERS.map((c) => {
-                const active = c.key === cost;
-                return (
+            <div className="flex items-center gap-2 mt-3">
+              <input
+                type="time"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+                aria-label="Specific start time"
+                className="rounded-xl bg-cream border border-line px-3 py-2 text-sm focus:outline-none focus:border-line-strong"
+              />
+              {startTime && (
+                <>
+                  <span className="text-xs text-ink-mute">to</span>
+                  <input
+                    type="time"
+                    value={endTime}
+                    onChange={(e) => setEndTime(e.target.value)}
+                    aria-label="Specific end time (optional)"
+                    className="rounded-xl bg-cream border border-line px-3 py-2 text-sm focus:outline-none focus:border-line-strong"
+                  />
                   <button
-                    key={c.key}
                     type="button"
-                    onClick={() => setCost(c.key)}
-                    className={`rounded-full px-3 py-1.5 text-xs font-medium border transition ${
-                      active
-                        ? "bg-ink text-cream-raised border-ink"
-                        : "bg-cream border-line text-ink-soft hover:border-line-strong"
-                    }`}
+                    onClick={() => {
+                      setStartTime("");
+                      setEndTime("");
+                    }}
+                    className="text-xs text-ink-mute hover:text-ink transition"
                   >
-                    {c.label}
+                    Clear
                   </button>
-                );
-              })}
+                </>
+              )}
             </div>
           </Field>
+
+          {category !== "errands" && (
+            <Field label="Cost">
+              <div className="flex flex-wrap gap-1.5">
+                {COST_TIERS.map((c) => {
+                  const active = c.key === cost;
+                  return (
+                    <button
+                      key={c.key}
+                      type="button"
+                      onClick={() => setCost(c.key)}
+                      className={`rounded-full px-3 py-1.5 text-xs font-medium border transition ${
+                        active
+                          ? "bg-ink text-cream-raised border-ink"
+                          : "bg-cream border-line text-ink-soft hover:border-line-strong"
+                      }`}
+                    >
+                      {c.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </Field>
+          )}
 
           <Field label="Location">
             <input
@@ -278,12 +373,16 @@ export function ItemSheet({
               aria-label="Remove this idea"
             >
               <Trash2 size={14} />
-              Remove
+              {hasRepeat ? "Remove entire series" : "Remove"}
             </button>
           )}
           {isEdit && onDelete && confirmingDelete && (
             <div className="flex items-center gap-2">
-              <span className="text-xs text-ink-soft">Remove this idea?</span>
+              <span className="text-xs text-ink-soft max-w-[220px]">
+                {hasRepeat
+                  ? "Delete every day of this repeat, not just one? To skip a single day instead, use \"Skip just [date]\" from the Calendar tab."
+                  : "Remove this idea?"}
+              </span>
               <button
                 type="button"
                 onClick={() => setConfirmingDelete(false)}

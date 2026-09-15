@@ -15,22 +15,26 @@ import {
   startOfWeek,
   subMonths,
 } from "date-fns";
-import { ChevronLeft, ChevronRight, Heart, MapPin, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, Heart, MapPin, Plus, Repeat, X } from "lucide-react";
 import type { Item } from "@/lib/types";
 import { CATEGORY_BY_KEY } from "@/lib/taxonomy";
 import { AvatarStack } from "./Avatar";
 import { useFamily } from "./FamilyContext";
+
+const WEEKDAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 
 export function CalendarView({
   items,
   onToggleInterested,
   onEdit,
   onAddForDate,
+  onSkipOccurrence,
 }: {
   items: Item[];
   onToggleInterested: (id: string) => void;
   onEdit: (item: Item) => void;
   onAddForDate: (isoDate: string) => void;
+  onSkipOccurrence: (itemId: string, isoDate: string) => void;
 }) {
   const { memberById, viewerId } = useFamily();
   const [cursor, setCursor] = useState(() => new Date());
@@ -47,20 +51,34 @@ export function CalendarView({
     [items],
   );
 
-  const itemsOnDay = (d: Date) =>
-    datedItems.filter((i) => {
+  const itemsOnDay = (d: Date) => {
+    const iso = toIso(d);
+    return datedItems.filter((i) => {
+      if (i.excludeDates?.includes(iso)) return false;
+      if (i.repeatWeekdays && i.repeatWeekdays.length > 0) {
+        return iso >= i.date! && i.repeatWeekdays.includes(WEEKDAY_KEYS[d.getDay()]);
+      }
+      if (i.repeatDates && i.repeatDates.length > 0) {
+        return i.repeatDates.includes(iso);
+      }
       const start = parseISO(i.date!);
       const end = i.endDate ? parseISO(i.endDate) : start;
       return isWithinInterval(d, { start, end });
     });
+  };
+
+  const isRepeating = (i: Item) =>
+    !!(i.repeatWeekdays?.length || i.repeatDates?.length);
+  const hideInterest = (i: Item) => i.category === "errands" || isRepeating(i);
 
   const selectedDay = selected ?? new Date();
   const selectedItems = itemsOnDay(selectedDay);
+  const weekRows = days.length / 7;
 
   return (
-    <div className="mx-auto max-w-6xl px-6 lg:px-10 pb-24 animate-fade-in">
-      <div className="flex items-center justify-between mb-5">
-        <h2 className="font-display text-[28px] lg:text-[32px] font-medium tracking-tight">
+    <div className="mx-auto max-w-[1440px] px-6 lg:px-10 pb-4 lg:pb-4 flex flex-col animate-fade-in lg:h-[calc(100dvh-258px)] lg:min-h-[520px]">
+      <div className="flex items-center justify-between mb-4 shrink-0">
+        <h2 className="font-display text-[26px] lg:text-[30px] font-medium tracking-tight">
           {format(cursor, "MMMM yyyy")}
         </h2>
         <div className="flex items-center gap-1">
@@ -90,9 +108,9 @@ export function CalendarView({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
-        <div className="rounded-[22px] bg-cream-raised border border-line overflow-hidden">
-          <div className="grid grid-cols-7 border-b border-line bg-cream">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 flex-1 min-h-0">
+        <div className="rounded-[22px] bg-cream-raised border border-line overflow-hidden flex flex-col">
+          <div className="grid grid-cols-7 border-b border-line bg-cream shrink-0">
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
               <div
                 key={d}
@@ -102,7 +120,10 @@ export function CalendarView({
               </div>
             ))}
           </div>
-          <div className="grid grid-cols-7 auto-rows-[112px]">
+          <div
+            className="grid grid-cols-7 flex-1 min-h-0"
+            style={{ gridTemplateRows: `repeat(${weekRows}, 1fr)` }}
+          >
             {days.map((day, idx) => {
               const inMonth = isSameMonth(day, cursor);
               const dayItems = itemsOnDay(day);
@@ -113,7 +134,7 @@ export function CalendarView({
                   key={idx}
                   type="button"
                   onClick={() => setSelected(day)}
-                  className={`relative border-line text-left p-1.5 transition overflow-hidden ${
+                  className={`relative flex flex-col border-line text-left p-1.5 transition overflow-hidden ${
                     idx % 7 !== 6 ? "border-r" : ""
                   } ${
                     idx < days.length - 7 ? "border-b" : ""
@@ -123,7 +144,7 @@ export function CalendarView({
                       : "bg-cream/50 text-ink-mute"
                   } ${isSelected ? "bg-cream" : ""}`}
                 >
-                  <div className="flex items-center justify-between px-1 mb-1">
+                  <div className="flex items-center justify-between px-1 mb-1 shrink-0">
                     <span
                       className={`inline-flex items-center justify-center h-6 min-w-6 px-1.5 rounded-full text-xs font-medium ${
                         isToday
@@ -137,25 +158,28 @@ export function CalendarView({
                     >
                       {format(day, "d")}
                     </span>
+                    {dayItems.length > 0 && (
+                      <span className="text-[10px] text-ink-mute pr-0.5">
+                        {dayItems.length}
+                      </span>
+                    )}
                   </div>
 
-                  <div className="space-y-1 px-0.5">
-                    {dayItems.slice(0, 3).map((it) => {
+                  <div className="no-scrollbar flex-1 min-h-0 overflow-y-auto space-y-1 px-0.5">
+                    {dayItems.map((it) => {
                       const cat = CATEGORY_BY_KEY[it.category];
                       return (
                         <div
                           key={it.id}
-                          className={`${cat.tint} ${cat.ink} text-[11px] leading-tight rounded-md px-1.5 py-0.5 truncate`}
+                          className={`${cat.tint} ${cat.ink} text-[11px] leading-tight rounded-md px-1.5 py-0.5 truncate inline-flex items-center gap-1 w-full`}
                         >
-                          {it.title}
+                          {isRepeating(it) && (
+                            <Repeat size={9} className="shrink-0" strokeWidth={2.5} />
+                          )}
+                          <span className="truncate">{it.title}</span>
                         </div>
                       );
                     })}
-                    {dayItems.length > 3 && (
-                      <div className="text-[11px] text-ink-mute pl-1">
-                        +{dayItems.length - 3} more
-                      </div>
-                    )}
                   </div>
                 </button>
               );
@@ -163,7 +187,7 @@ export function CalendarView({
           </div>
         </div>
 
-        <aside className="rounded-[22px] bg-cream-raised border border-line p-5 flex flex-col gap-4 h-fit lg:sticky lg:top-28">
+        <aside className="rounded-[22px] bg-cream-raised border border-line p-5 flex flex-col gap-4 h-fit lg:h-full lg:overflow-y-auto">
           <div>
             <div className="text-[11px] uppercase tracking-[0.16em] text-ink-mute font-semibold">
               {isSameDay(selectedDay, new Date())
@@ -211,39 +235,69 @@ export function CalendarView({
                     <div className="font-display text-base leading-snug text-ink">
                       {it.title}
                     </div>
-                    {it.location && (
-                      <div className="mt-1 inline-flex items-center gap-1 text-xs text-ink-soft">
-                        <MapPin size={12} className="text-ink-mute" />
-                        {it.location}
-                      </div>
-                    )}
-                    <div className="mt-3 flex items-center justify-between">
-                      <AvatarStack
-                        members={interestedMembers}
-                        size={20}
-                        max={5}
-                      />
+                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-soft">
+                      {it.startTime && (
+                        <span className="inline-flex items-center gap-1">
+                          <Clock size={12} className="text-ink-mute" />
+                          {it.startTime}
+                          {it.endTime && `–${it.endTime}`}
+                        </span>
+                      )}
+                      {it.location && (
+                        <span className="inline-flex items-center gap-1">
+                          <MapPin size={12} className="text-ink-mute" />
+                          {it.location}
+                        </span>
+                      )}
+                      {isRepeating(it) && (
+                        <span className="inline-flex items-center gap-1">
+                          <Repeat size={12} className="text-ink-mute" />
+                          Repeats
+                        </span>
+                      )}
+                    </div>
+                    {isRepeating(it) && (
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          onToggleInterested(it.id);
+                          onSkipOccurrence(it.id, toIso(selectedDay));
                         }}
-                        aria-pressed={isInterested}
-                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium border transition ${
-                          isInterested
-                            ? "bg-[#FDE3E3] border-[#F2B9B9] text-[#B93636]"
-                            : "bg-cream-raised border-line text-ink-soft hover:border-line-strong hover:text-ink"
-                        }`}
+                        className="mt-2.5 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium border border-line bg-cream-raised text-ink-soft hover:border-line-strong hover:text-ink transition"
                       >
-                        <Heart
-                          size={12}
-                          strokeWidth={2.2}
-                          className={isInterested ? "fill-current" : ""}
-                        />
-                        Interested
+                        <X size={11} strokeWidth={2.4} />
+                        Skip just {format(selectedDay, "MMM d")}
                       </button>
-                    </div>
+                    )}
+                    {!hideInterest(it) && (
+                      <div className="mt-3 flex items-center justify-between">
+                        <AvatarStack
+                          members={interestedMembers}
+                          size={20}
+                          max={5}
+                        />
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onToggleInterested(it.id);
+                          }}
+                          aria-pressed={isInterested}
+                          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium border transition ${
+                            isInterested
+                              ? "bg-[#FDE3E3] border-[#F2B9B9] text-[#B93636]"
+                              : "bg-cream-raised border-line text-ink-soft hover:border-line-strong hover:text-ink"
+                          }`}
+                        >
+                          <Heart
+                            size={12}
+                            strokeWidth={2.2}
+                            className={isInterested ? "fill-current" : ""}
+                          />
+                          Interested
+                        </button>
+                      </div>
+                    )}
                   </li>
                 );
               })}

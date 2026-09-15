@@ -6,6 +6,7 @@ import { Header } from "./Header";
 import { FilterBar } from "./FilterBar";
 import { IdeasGrid } from "./IdeasGrid";
 import { CalendarView } from "./CalendarView";
+import { DiscoverView } from "./DiscoverView";
 import { ViewToggle } from "./ViewToggle";
 import { ItemSheet } from "./ItemSheet";
 import { FamilyProvider } from "./FamilyContext";
@@ -14,9 +15,12 @@ import {
   updateItem as serverUpdateItem,
   deleteItem as serverDeleteItem,
   toggleInterest as serverToggleInterest,
+  addDiscoveredEvent as serverAddDiscoveredEvent,
+  skipOccurrence as serverSkipOccurrence,
 } from "@/app/actions";
 import { applyFilters } from "@/lib/filter";
-import type { Filters, Item, SortKey, View } from "@/lib/types";
+import { DISCOVER_EVENTS } from "@/lib/discoverData";
+import type { DiscoverEvent, Filters, Item, View } from "@/lib/types";
 
 const INITIAL_FILTERS: Filters = {
   categories: new Set(),
@@ -34,6 +38,7 @@ export function PlannerApp({
   familyId,
   familyName,
   inviteToken,
+  addedDiscoverIds,
 }: {
   initialItems: Item[];
   members: FamilyMember[];
@@ -41,13 +46,24 @@ export function PlannerApp({
   familyId: string;
   familyName: string;
   inviteToken: string;
+  addedDiscoverIds: string[];
 }) {
   const [filters, setFilters] = useState<Filters>(INITIAL_FILTERS);
   const [view, setView] = useState<View>("ideas");
-  const [sort, setSort] = useState<SortKey>("newest");
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editing, setEditing] = useState<Item | null>(null);
   const [defaultDate, setDefaultDate] = useState<string | undefined>(undefined);
+  const [discoverAdded, setDiscoverAdded] = useState<Set<string>>(
+    () => new Set(addedDiscoverIds),
+  );
+  // Re-sync with the server whenever it hands us a fresh array (e.g. after
+  // a revalidate triggered by deleting an item) — otherwise a deleted
+  // item's Discover card stays stuck showing "Added" even though it's gone.
+  const [syncedIds, setSyncedIds] = useState(addedDiscoverIds);
+  if (addedDiscoverIds !== syncedIds) {
+    setSyncedIds(addedDiscoverIds);
+    setDiscoverAdded(new Set(addedDiscoverIds));
+  }
   const [, startTransition] = useTransition();
 
   const [optimisticItems, addOptimistic] = useOptimistic(
@@ -97,7 +113,11 @@ export function PlannerApp({
         kind: item.kind,
         date: item.date,
         endDate: item.endDate,
+        repeatWeekdays: item.repeatWeekdays,
+        repeatDates: item.repeatDates,
         timeOfDay: item.timeOfDay,
+        startTime: item.startTime,
+        endTime: item.endTime,
         cost: item.cost,
         pricePerPerson: item.pricePerPerson,
         location: item.location,
@@ -112,7 +132,11 @@ export function PlannerApp({
         kind: item.kind,
         date: item.date,
         endDate: item.endDate,
+        repeatWeekdays: item.repeatWeekdays,
+        repeatDates: item.repeatDates,
         timeOfDay: item.timeOfDay,
+        startTime: item.startTime,
+        endTime: item.endTime,
         cost: item.cost,
         pricePerPerson: item.pricePerPerson,
         location: item.location,
@@ -127,6 +151,24 @@ export function PlannerApp({
       addOptimistic({ type: "delete", itemId: id });
       await serverDeleteItem(id);
     });
+  };
+
+  const handleSkipOccurrence = async (itemId: string, isoDate: string) => {
+    await serverSkipOccurrence(itemId, isoDate);
+  };
+
+  const handleAddDiscovered = async (event: DiscoverEvent, chosenDate?: string) => {
+    await serverAddDiscoveredEvent({
+      familyId,
+      discoveredId: event.id,
+      addedById: viewerId,
+      chosenDate,
+    });
+    // A chosen-date add is deliberately repeatable (e.g. this month's
+    // meetup but not next month's), so it never gets marked "Added".
+    if (!chosenDate) {
+      setDiscoverAdded((prev) => new Set(prev).add(event.id));
+    }
   };
 
   const openAdd = () => {
@@ -162,27 +204,28 @@ export function PlannerApp({
         inviteToken={inviteToken}
       />
 
-      <div className="mx-auto max-w-6xl px-6 lg:px-10 pt-10 flex items-end justify-between gap-4">
-        <div>
-          <div className="text-[11px] uppercase tracking-[0.16em] text-ink-mute font-semibold">
-            Shared outing calendar
-          </div>
-          <h1 className="font-display text-[40px] lg:text-[52px] font-medium tracking-tight mt-1 leading-[1.05]">
-            Things to
-            <span className="italic text-ink-soft"> do</span>
+      <div className="mx-auto max-w-6xl px-6 lg:px-10 pt-5 flex items-center justify-between gap-4">
+        <div className="flex items-baseline gap-2.5">
+          <h1 className="font-display text-[22px] lg:text-[24px] font-medium tracking-tight">
+            Things to <span className="italic text-ink-soft">do</span>
           </h1>
+          <span className="hidden sm:inline text-[11px] uppercase tracking-[0.16em] text-ink-mute font-semibold">
+            Shared outing calendar
+          </span>
         </div>
         <ViewToggle value={view} onChange={setView} />
       </div>
 
-      <FilterBar
-        filters={filters}
-        onChange={setFilters}
-        totalCount={optimisticItems.length}
-        filteredCount={filtered.length}
-      />
+      {view !== "discover" && (
+        <FilterBar
+          filters={filters}
+          onChange={setFilters}
+          totalCount={optimisticItems.length}
+          filteredCount={filtered.length}
+        />
+      )}
 
-      <main className="mt-8">
+      <main className="mt-4">
         {view === "ideas" ? (
           <IdeasGrid
             items={filtered}
@@ -190,15 +233,20 @@ export function PlannerApp({
             onEdit={openEdit}
             totalCount={optimisticItems.length}
             onAdd={openAdd}
-            sort={sort}
-            onSortChange={setSort}
           />
-        ) : (
+        ) : view === "calendar" ? (
           <CalendarView
             items={filtered}
             onToggleInterested={handleToggleInterested}
             onEdit={openEdit}
             onAddForDate={openAddForDate}
+            onSkipOccurrence={handleSkipOccurrence}
+          />
+        ) : (
+          <DiscoverView
+            events={DISCOVER_EVENTS}
+            addedIds={discoverAdded}
+            onAdd={handleAddDiscovered}
           />
         )}
       </main>
