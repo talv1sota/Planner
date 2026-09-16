@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { ChevronDown, X } from "lucide-react";
-import type { CategoryKey, CostTier, Filters, TimeOfDay } from "@/lib/types";
-import { CATEGORIES, COST_TIERS, TIMES } from "@/lib/taxonomy";
+import type { CategoryKey, Filters, TimeOfDay } from "@/lib/types";
+import { CATEGORIES, TIMES } from "@/lib/taxonomy";
 import { Avatar } from "./Avatar";
 import { useFamily } from "./FamilyContext";
 
-type PopoverKey = "category" | "cost" | "time" | "when" | "interested" | null;
+type PopoverKey = "category" | "time" | "when" | "interested" | null;
 
 export function FilterBar({
   filters,
@@ -53,16 +53,6 @@ export function FilterBar({
         const next = new Set(filters.categories);
         next.delete(k);
         update({ categories: next });
-      },
-    })),
-    ...Array.from(filters.costs).map((k) => ({
-      kind: "cost" as const,
-      key: k,
-      label: COST_TIERS.find((c) => c.key === k)?.shortLabel ?? k,
-      onRemove: () => {
-        const next = new Set(filters.costs);
-        next.delete(k);
-        update({ costs: next });
       },
     })),
     ...Array.from(filters.times).map((k) => ({
@@ -118,27 +108,6 @@ export function FilterBar({
               if (next.has(v)) next.delete(v);
               else next.add(v);
               update({ categories: next });
-            }}
-          />
-        </FilterPill>
-
-        <FilterPill
-          label={chipCountLabel("Cost", filters.costs.size)}
-          active={filters.costs.size > 0}
-          open={open === "cost"}
-          onToggle={() => setOpen(open === "cost" ? null : "cost")}
-        >
-          <MultiSelect
-            options={COST_TIERS.map((c) => ({
-              value: c.key,
-              label: c.label,
-            }))}
-            selected={filters.costs}
-            onToggle={(v: CostTier) => {
-              const next = new Set(filters.costs);
-              if (next.has(v)) next.delete(v);
-              else next.add(v);
-              update({ costs: next });
             }}
           />
         </FilterPill>

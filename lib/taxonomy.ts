@@ -86,6 +86,13 @@ export const CATEGORIES: Category[] = [
     ink: "text-[#7A3F14]",
   },
   {
+    key: "holidays",
+    label: "Holidays",
+    emoji: "🎉",
+    tint: "bg-[#F2DCA0]",
+    ink: "text-[#6E4E0C]",
+  },
+  {
     key: "clubs",
     label: "Clubs & Groups",
     emoji: "🤝",

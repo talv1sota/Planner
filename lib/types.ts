@@ -11,6 +11,7 @@ export type CategoryKey =
   | "shows"
   | "daytrips"
   | "seasonal"
+  | "holidays"
   | "clubs"
   | "errands"
   | "other";
