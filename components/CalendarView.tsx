@@ -82,10 +82,55 @@ export function CalendarView({
   const isRepeating = (i: Item) =>
     !!(i.repeatWeekdays?.length || i.repeatDates?.length);
   const hideInterest = (i: Item) => i.category === "errands" || isRepeating(i);
+  // A real multi-day span (not a repeat, which just recurs on single days).
+  const isMultiDaySpan = (i: Item) =>
+    i.kind === "dated" && !!i.endDate && i.endDate !== i.date && !isRepeating(i);
 
   const selectedDay = selected ?? new Date();
   const selectedItems = itemsOnDay(selectedDay);
-  const weekRows = days.length / 7;
+
+  const weeks: Date[][] = [];
+  for (let i = 0; i < days.length; i += 7) weeks.push(days.slice(i, i + 7));
+
+  // Google-Calendar-style: a multi-day event becomes one bar spanning the
+  // columns it covers in a given week (clipped to that week), instead of
+  // repeating as separate same-size chips on every day it touches.
+  const DAY_NUM_H = 24;
+  const BAR_H = 16;
+  const BAR_GAP = 2;
+  function weekBars(week: Date[]) {
+    const weekStartIso = toIso(week[0]);
+    const weekEndIso = toIso(week[6]);
+    const seen = new Map<string, Item>();
+    week.forEach((d) =>
+      itemsOnDay(d).forEach((it) => {
+        if (isMultiDaySpan(it)) seen.set(it.id, it);
+      }),
+    );
+    const spans = [...seen.values()]
+      .map((item) => {
+        const startIso = item.date! < weekStartIso ? weekStartIso : item.date!;
+        const endIso = item.endDate! > weekEndIso ? weekEndIso : item.endDate!;
+        const startCol = week.findIndex((d) => toIso(d) === startIso);
+        const endCol = week.findIndex((d) => toIso(d) === endIso);
+        return { item, startCol: Math.max(0, startCol), endCol: Math.max(0, endCol) };
+      })
+      .sort((a, b) => a.startCol - b.startCol);
+
+    // Greedy row-stacking so overlapping bars don't sit on top of each other.
+    const rowEnds: number[] = [];
+    const placed = spans.map((s) => {
+      let row = rowEnds.findIndex((end) => end < s.startCol);
+      if (row === -1) {
+        row = rowEnds.length;
+        rowEnds.push(s.endCol);
+      } else {
+        rowEnds[row] = s.endCol;
+      }
+      return { ...s, row };
+    });
+    return { bars: placed, spanIds: new Set(seen.keys()), rows: rowEnds.length };
+  }
 
   return (
     <div className="mx-auto max-w-[1440px] px-6 lg:px-10 pb-4 lg:pb-4 flex flex-col animate-fade-in lg:h-[calc(100dvh-258px)] lg:min-h-[520px]">
@@ -132,68 +177,119 @@ export function CalendarView({
               </div>
             ))}
           </div>
-          <div
-            className="grid grid-cols-7 flex-1 min-h-0"
-            style={{ gridTemplateRows: `repeat(${weekRows}, 1fr)` }}
-          >
-            {days.map((day, idx) => {
-              const inMonth = isSameMonth(day, cursor);
-              const dayItems = itemsOnDay(day);
-              const isSelected = isSameDay(day, selectedDay);
-              const isToday = isSameDay(day, new Date());
+          <div className="flex-1 min-h-0 flex flex-col">
+            {weeks.map((week, weekIdx) => {
+              const { bars, spanIds, rows } = weekBars(week);
+              const barsHeight = rows > 0 ? rows * BAR_H + (rows - 1) * BAR_GAP + 3 : 0;
               return (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => setSelected(day)}
-                  className={`relative flex flex-col border-line text-left p-1.5 transition overflow-hidden ${
-                    idx % 7 !== 6 ? "border-r" : ""
-                  } ${
-                    idx < days.length - 7 ? "border-b" : ""
-                  } ${
-                    inMonth
-                      ? "bg-cream-raised hover:bg-cream/70"
-                      : "bg-cream/50 text-ink-mute"
-                  } ${isSelected ? "bg-cream" : ""}`}
+                <div
+                  key={weekIdx}
+                  className="relative grid grid-cols-7 flex-1 min-h-0"
                 >
-                  <div className="flex items-center justify-between px-1 mb-1 shrink-0">
-                    <span
-                      className={`inline-flex items-center justify-center h-6 min-w-6 px-1.5 rounded-full text-xs font-medium ${
-                        isToday
-                          ? "bg-ink text-cream-raised"
-                          : isSelected
-                            ? "bg-accent/20 text-accent-ink"
-                            : inMonth
-                              ? "text-ink"
-                              : "text-ink-mute"
-                      }`}
-                    >
-                      {format(day, "d")}
-                    </span>
-                    {dayItems.length > 0 && (
-                      <span className="text-[10px] text-ink-mute pr-0.5">
-                        {dayItems.length}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="no-scrollbar flex-1 min-h-0 overflow-y-auto space-y-1 px-0.5">
-                    {dayItems.map((it) => {
-                      const cat = CATEGORY_BY_KEY[it.category];
-                      return (
+                  {week.map((day, colIdx) => {
+                    const idx = weekIdx * 7 + colIdx;
+                    const inMonth = isSameMonth(day, cursor);
+                    const dayItems = itemsOnDay(day).filter((it) => !spanIds.has(it.id));
+                    const isSelected = isSameDay(day, selectedDay);
+                    const isToday = isSameDay(day, new Date());
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setSelected(day)}
+                        className={`relative flex flex-col border-line text-left p-1.5 transition overflow-hidden ${
+                          colIdx !== 6 ? "border-r" : ""
+                        } ${
+                          weekIdx !== weeks.length - 1 ? "border-b" : ""
+                        } ${
+                          inMonth
+                            ? "bg-cream-raised hover:bg-cream/70"
+                            : "bg-cream/50 text-ink-mute"
+                        } ${isSelected ? "bg-cream" : ""}`}
+                      >
                         <div
-                          key={it.id}
-                          className={`${cat.tint} ${cat.ink} text-[11px] leading-tight rounded-md px-1.5 py-0.5 truncate inline-flex items-center gap-1 w-full`}
+                          className="flex items-center justify-between px-1 shrink-0"
+                          style={{ height: DAY_NUM_H, marginBottom: barsHeight }}
                         >
-                          {isRepeating(it) && (
-                            <Repeat size={9} className="shrink-0" strokeWidth={2.5} />
-                          )}
-                          <span className="truncate">{it.title}</span>
+                          <span
+                            className={`inline-flex items-center justify-center h-6 min-w-6 px-1.5 rounded-full text-xs font-medium ${
+                              isToday
+                                ? "bg-ink text-cream-raised"
+                                : isSelected
+                                  ? "bg-accent/20 text-accent-ink"
+                                  : inMonth
+                                    ? "text-ink"
+                                    : "text-ink-mute"
+                            }`}
+                          >
+                            {format(day, "d")}
+                          </span>
                         </div>
-                      );
-                    })}
-                  </div>
-                </button>
+
+                        <div className="no-scrollbar flex-1 min-h-0 overflow-y-auto space-y-0.5 px-0.5">
+                          {dayItems.map((it) => {
+                            const cat = CATEGORY_BY_KEY[it.category];
+                            if (it.startTime) {
+                              // Timed, single-day: compact dot + time, like
+                              // Google Calendar's non-all-day entries.
+                              return (
+                                <div
+                                  key={it.id}
+                                  className="flex items-center gap-1 text-[11px] leading-tight text-ink px-1 py-[1px] truncate"
+                                >
+                                  <span
+                                    className={`h-1.5 w-1.5 rounded-full shrink-0 ${cat.ink} bg-current`}
+                                  />
+                                  <span className="text-ink-mute shrink-0 tabular-nums">
+                                    {it.startTime}
+                                  </span>
+                                  <span className="truncate">{it.title}</span>
+                                </div>
+                              );
+                            }
+                            return (
+                              <div
+                                key={it.id}
+                                className={`${cat.tint} ${cat.ink} text-[11px] leading-tight rounded-md px-1.5 py-0.5 truncate flex items-center gap-1 w-full`}
+                              >
+                                {isRepeating(it) && (
+                                  <Repeat size={9} className="shrink-0" strokeWidth={2.5} />
+                                )}
+                                <span className="truncate">{it.title}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </button>
+                    );
+                  })}
+
+                  {bars.length > 0 && (
+                    <div
+                      className="absolute left-0 right-0 pointer-events-none px-px"
+                      style={{ top: DAY_NUM_H }}
+                    >
+                      {bars.map(({ item, startCol, endCol, row }) => {
+                        const cat = CATEGORY_BY_KEY[item.category];
+                        return (
+                          <div
+                            key={item.id}
+                            title={item.title}
+                            className={`absolute ${cat.tint} ${cat.ink} text-[10px] font-medium leading-none rounded truncate flex items-center px-1.5`}
+                            style={{
+                              top: row * (BAR_H + BAR_GAP) + 2,
+                              height: BAR_H,
+                              left: `calc(${(startCol / 7) * 100}% + 2px)`,
+                              width: `calc(${((endCol - startCol + 1) / 7) * 100}% - 4px)`,
+                            }}
+                          >
+                            {item.title}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>
