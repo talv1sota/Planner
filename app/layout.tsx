@@ -16,7 +16,7 @@ const sans = Inter({
 
 export const metadata: Metadata = {
   title: "Family Calendar",
-  description: "A shared list of outings and ideas for the family.",
+  description: "A shared calendar and planner for the family.",
 };
 
 export default function RootLayout({

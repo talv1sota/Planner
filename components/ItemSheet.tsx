@@ -128,7 +128,7 @@ export function ItemSheet({
       >
         <div className="sticky top-0 z-10 bg-cream-raised/95 backdrop-blur border-b border-line px-6 py-4 flex items-center justify-between">
           <h2 className="font-display text-xl font-medium">
-            {isEdit ? "Edit idea" : "New idea"}
+            {isEdit ? "Edit item" : "New item"}
           </h2>
           <button
             type="button"
@@ -188,7 +188,7 @@ export function ItemSheet({
                       : "bg-cream border-line text-ink-soft hover:border-line-strong"
                   }`}
                 >
-                  {k === "evergreen" ? "Anytime idea" : "Specific date"}
+                  {k === "evergreen" ? "Anytime" : "Specific date"}
                 </button>
               ))}
             </div>
@@ -382,7 +382,7 @@ export function ItemSheet({
               type="button"
               onClick={() => setConfirmingDelete(true)}
               className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-sm text-ink-mute hover:text-[#B93636] hover:bg-[#FDE3E3]/60 transition"
-              aria-label="Remove this idea"
+              aria-label="Remove this item"
             >
               <Trash2 size={14} />
               {hasRepeat ? "Remove entire series" : "Remove"}
@@ -393,7 +393,7 @@ export function ItemSheet({
               <span className="text-xs text-ink-soft max-w-[220px]">
                 {hasRepeat
                   ? "Delete every day of this repeat, not just one? To skip a single day instead, use \"Skip just [date]\" from the Calendar tab."
-                  : "Remove this idea?"}
+                  : "Remove this item?"}
               </span>
               <button
                 type="button"

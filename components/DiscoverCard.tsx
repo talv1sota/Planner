@@ -34,7 +34,7 @@ export function DiscoverCard({
       }}
       className="group relative flex flex-col text-left rounded-[22px] bg-cream-raised border border-line overflow-hidden hover:border-line-strong transition shadow-[0_1px_0_rgba(42,38,32,0.02)] cursor-pointer"
     >
-      <div className={`relative h-24 ${category.tint}`}>
+      <div className={`relative h-20 ${category.tint}`}>
         <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-cream-raised/90 backdrop-blur px-2.5 py-1 text-[11px] font-medium text-ink">
           <span>{category.emoji}</span>
           {category.label}
@@ -51,10 +51,6 @@ export function DiscoverCard({
             </div>
           )
         )}
-        <div className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-cream-raised/90 backdrop-blur px-2.5 py-1 text-[11px] font-medium text-ink">
-          <span>{FLAG[event.country]}</span>
-          {event.city}
-        </div>
       </div>
 
       <div className="flex-1 flex flex-col gap-2.5 p-4">
@@ -74,6 +70,10 @@ export function DiscoverCard({
                 {event.recurrence ?? "Recurring"}
               </span>
             )}
+            <span className="inline-flex items-center gap-1">
+              <span>{FLAG[event.country]}</span>
+              {event.city}
+            </span>
             {event.location && (
               <span className="inline-flex items-center gap-1">
                 <MapPin size={13} className="text-ink-mute" />

@@ -42,14 +42,14 @@ export function IdeasGrid({
           No outings yet
         </p>
         <p className="text-sm text-ink-soft mt-2 max-w-sm mx-auto">
-          Start building your shared list of things to do. Add a dated event or an anytime idea.
+          Start building your shared list of things to do. Add a dated event or an anytime item.
         </p>
         <button
           type="button"
           onClick={onAdd}
           className="mt-6 inline-flex items-center gap-1.5 rounded-full bg-ink text-cream-raised font-medium text-sm px-5 py-2.5 hover:opacity-90 transition"
         >
-          Add your first idea
+          Add your first item
         </button>
       </div>
     );

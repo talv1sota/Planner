@@ -38,6 +38,10 @@ export const TOWN_IMAGES: Record<string, string> = {
     "https://commons.wikimedia.org/wiki/Special:FilePath/Muenster_Innenstadt.jpg?width=800",
   Zwolle:
     "https://commons.wikimedia.org/wiki/Special:FilePath/Sassenstraat_1-15%2C_Zwolle.jpg?width=800",
+  Amsterdam:
+    "https://commons.wikimedia.org/wiki/Special:FilePath/Amsterdam_Canals_-_July_2006.jpg?width=800",
+  "Ozone Park":
+    "https://commons.wikimedia.org/wiki/Special:FilePath/OzonePark-Welcome-sign.JPG?width=800",
 };
 
 export function getTownImage(city?: string): string | undefined {

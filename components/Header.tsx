@@ -42,7 +42,7 @@ export function Header({
               type="search"
               value={search}
               onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Search ideas"
+              placeholder="Search"
               className="w-full rounded-full bg-cream-raised border border-line focus:border-line-strong focus:outline-none pl-9 pr-4 py-2 text-sm placeholder:text-ink-mute"
             />
             {search && (
@@ -84,8 +84,7 @@ export function Header({
             className="inline-flex items-center gap-1.5 rounded-full bg-ink text-cream-raised font-medium text-sm pl-3.5 pr-4 py-2 hover:opacity-90 active:opacity-80 transition"
           >
             <Plus size={16} strokeWidth={2.5} />
-            <span className="hidden sm:inline">Add idea</span>
-            <span className="sm:hidden">Add</span>
+            Add
           </button>
         </div>
       </div>
@@ -103,7 +102,7 @@ export function Header({
               type="search"
               value={search}
               onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Search ideas"
+              placeholder="Search"
               autoFocus
               className="w-full rounded-full bg-cream-raised border border-line focus:border-line-strong focus:outline-none pl-9 pr-9 py-2 text-sm placeholder:text-ink-mute"
             />
