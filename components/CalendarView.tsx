@@ -21,17 +21,7 @@ import {
   subWeeks,
   subYears,
 } from "date-fns";
-import {
-  CalendarDays,
-  ChevronLeft,
-  ChevronRight,
-  Clock,
-  Heart,
-  MapPin,
-  Plus,
-  Repeat,
-  X,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, Heart, MapPin, Plus, Repeat, X } from "lucide-react";
 import type { Item } from "@/lib/types";
 import { CATEGORY_BY_KEY } from "@/lib/taxonomy";
 import { AvatarStack } from "./Avatar";
@@ -179,7 +169,7 @@ export function CalendarView({
           : formatWeekRange(weekDays[0], weekDays[6]);
 
   return (
-    <div className="mx-auto max-w-[1440px] px-6 lg:px-10 pb-4 lg:pb-4 flex flex-col animate-fade-in lg:h-[calc(100dvh-258px)] lg:min-h-[520px]">
+    <div className="mx-auto max-w-[1440px] px-6 lg:px-10 pb-4 flex flex-col animate-fade-in lg:h-[calc(100dvh-173px)] lg:min-h-[520px]">
       <div className="flex items-center justify-between mb-4 shrink-0 flex-wrap gap-3">
         <h2 className="font-display text-[26px] lg:text-[30px] font-medium tracking-tight">
           {headerTitle}
@@ -292,11 +282,18 @@ export function CalendarView({
                     const isSelected = !!selected && isSameDay(day, selected);
                     const isToday = isSameDay(day, new Date());
                     return (
-                      <button
+                      <div
                         key={idx}
-                        type="button"
+                        role="button"
+                        tabIndex={0}
                         onClick={() => setSelected(day)}
-                        className={`relative flex flex-col border-line text-left p-1.5 transition overflow-hidden ${
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            setSelected(day);
+                          }
+                        }}
+                        className={`relative flex flex-col border-line text-left p-1.5 transition overflow-hidden cursor-pointer ${
                           colIdx !== 6 ? "border-r" : ""
                         } ${
                           weekIdx !== weeks.length - 1 ? "border-b" : ""
@@ -332,9 +329,14 @@ export function CalendarView({
                               // Timed, single-day: compact dot + time, like
                               // Google Calendar's non-all-day entries.
                               return (
-                                <div
+                                <button
                                   key={it.id}
-                                  className="flex items-center gap-1 text-[11px] leading-tight text-ink px-1 py-[1px] truncate"
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onEdit(it);
+                                  }}
+                                  className="flex items-center gap-1 text-[11px] leading-tight text-ink px-1 py-[1px] truncate w-full text-left rounded hover:bg-cream transition"
                                 >
                                   <span
                                     className={`h-1.5 w-1.5 rounded-full shrink-0 ${cat.ink} bg-current`}
@@ -343,23 +345,28 @@ export function CalendarView({
                                     {it.startTime}
                                   </span>
                                   <span className="truncate">{it.title}</span>
-                                </div>
+                                </button>
                               );
                             }
                             return (
-                              <div
+                              <button
                                 key={it.id}
-                                className={`${cat.tint} ${cat.ink} text-[11px] leading-tight rounded-md px-1.5 py-0.5 truncate flex items-center gap-1 w-full`}
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onEdit(it);
+                                }}
+                                className={`${cat.tint} ${cat.ink} text-[11px] leading-tight rounded-md px-1.5 py-0.5 truncate flex items-center gap-1 w-full text-left hover:brightness-95 transition`}
                               >
                                 {isRepeating(it) && (
                                   <Repeat size={9} className="shrink-0" strokeWidth={2.5} />
                                 )}
                                 <span className="truncate">{it.title}</span>
-                              </div>
+                              </button>
                             );
                           })}
                         </div>
-                      </button>
+                      </div>
                     );
                   })}
 
@@ -371,10 +378,12 @@ export function CalendarView({
                       {bars.map(({ item, startCol, endCol, row }) => {
                         const cat = CATEGORY_BY_KEY[item.category];
                         return (
-                          <div
+                          <button
                             key={item.id}
+                            type="button"
                             title={item.title}
-                            className={`absolute ${cat.tint} ${cat.ink} text-[10px] font-medium leading-none rounded truncate flex items-center px-1.5`}
+                            onClick={() => onEdit(item)}
+                            className={`absolute pointer-events-auto ${cat.tint} ${cat.ink} text-[10px] font-medium leading-none rounded truncate flex items-center px-1.5 text-left hover:brightness-95 transition`}
                             style={{
                               top: row * (BAR_H + BAR_GAP) + 2,
                               height: BAR_H,
@@ -383,7 +392,7 @@ export function CalendarView({
                             }}
                           >
                             {item.title}
-                          </div>
+                          </button>
                         );
                       })}
                     </div>
@@ -529,14 +538,6 @@ export function CalendarView({
             Add for {format(selected, "MMM d")}
           </button>
         </aside>
-        )}
-        {!selected && (
-          <div className="hidden lg:flex rounded-[22px] border border-dashed border-line items-center justify-center p-5 text-center">
-            <div>
-              <CalendarDays size={22} className="mx-auto text-ink-mute mb-2" strokeWidth={1.6} />
-              <p className="text-sm text-ink-mute">Click a day to see what&apos;s planned</p>
-            </div>
-          </div>
         )}
       </div>
       )}

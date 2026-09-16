@@ -29,6 +29,7 @@ const GUTTER = 44;
 const ALLDAY_BAR_H = 16;
 const ALLDAY_GAP = 2;
 const ALLDAY_PAD = 4; // top/bottom breathing room, baked into the height math below (not CSS padding) so it isn't double-counted against the explicit container height
+const EDGE_PAD = 10; // room for the first/last hour label's centered text (-translate-y-1/2) so it doesn't clip against the scroll container's top/bottom edge
 
 /** Google-Calendar-style Week/Day view: a shared hour axis with one column
  *  per visible day, events positioned by start time and sized by duration
@@ -119,7 +120,7 @@ export function TimeGrid({
   const rangeStart = allStarts.length ? Math.min(6 * 60, Math.floor(Math.min(...allStarts) / 60) * 60) : 7 * 60;
   const rangeEnd = allEnds.length ? Math.max(21 * 60, Math.ceil(Math.max(...allEnds) / 60) * 60) : 20 * 60;
   const pxPerMin = PX_PER_HOUR / 60;
-  const gridHeight = (rangeEnd - rangeStart) * pxPerMin;
+  const gridHeight = (rangeEnd - rangeStart) * pxPerMin + EDGE_PAD * 2;
 
   const hourMarks: number[] = [];
   for (let m = rangeStart; m <= rangeEnd; m += 60) hourMarks.push(m);
@@ -183,7 +184,7 @@ export function TimeGrid({
               <div
                 key={m}
                 className="absolute right-1.5 -translate-y-1/2 text-[10px] text-ink-mute tabular-nums"
-                style={{ top: (m - rangeStart) * pxPerMin }}
+                style={{ top: (m - rangeStart) * pxPerMin + EDGE_PAD }}
               >
                 {formatHourLabel(m)}
               </div>
@@ -194,7 +195,7 @@ export function TimeGrid({
               <div
                 key={m}
                 className="absolute left-0 right-0 border-t border-line"
-                style={{ top: (m - rangeStart) * pxPerMin }}
+                style={{ top: (m - rangeStart) * pxPerMin + EDGE_PAD }}
               />
             ))}
             {columns.map(({ date, spans }) => {
@@ -238,7 +239,7 @@ export function TimeGrid({
                         }}
                         className={`absolute ${cat.tint} ${cat.ink} rounded-md px-1.5 py-1 text-left overflow-hidden border-l-[3px] shadow-sm hover:brightness-95 transition`}
                         style={{
-                          top: (start - rangeStart) * pxPerMin,
+                          top: (start - rangeStart) * pxPerMin + EDGE_PAD,
                           height: (end - start) * pxPerMin,
                           width: `calc(${100 / totalCols}% - 3px)`,
                           left: `calc(${(col * 100) / totalCols}%)`,
