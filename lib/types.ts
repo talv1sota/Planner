@@ -57,7 +57,7 @@ export type Item = {
 export type Category = {
   key: CategoryKey;
   label: string;
-  emoji: string;
+  icon: import("lucide-react").LucideIcon;
   /** Tailwind classes for the soft category tint */
   tint: string;
   /** Text color when on tint */

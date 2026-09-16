@@ -6,7 +6,10 @@ import { eachDayOfInterval, format, parseISO } from "date-fns";
 import type { DiscoverEvent } from "@/lib/types";
 import { CATEGORY_BY_KEY, COST_BY_KEY } from "@/lib/taxonomy";
 
-const FLAG: Record<DiscoverEvent["country"], string> = { NL: "🇳🇱", DE: "🇩🇪" };
+const COUNTRY_LABEL: Record<DiscoverEvent["country"], string> = {
+  NL: "Netherlands",
+  DE: "Germany",
+};
 
 // Beyond this, a day-by-day checkbox picker stops being usable (e.g. a
 // months-long exhibition) — fall back to "whole run" vs. pick-specific-dates.
@@ -143,12 +146,11 @@ export function DiscoverDetailSheet({
             <X size={16} />
           </button>
           <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-cream-raised/90 backdrop-blur px-2.5 py-1 text-[11px] font-medium text-ink">
-            <span>{category.emoji}</span>
+            <category.icon size={13} />
             {category.label}
           </div>
           <div className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-cream-raised/90 backdrop-blur px-2.5 py-1 text-[11px] font-medium text-ink">
-            <span>{FLAG[event.country]}</span>
-            {event.city}
+            {event.city}, {COUNTRY_LABEL[event.country]}
           </div>
           {event.category !== "errands" && (
             <div className="absolute bottom-3 right-3 inline-flex items-center gap-1 rounded-full bg-cream-raised/90 backdrop-blur px-2.5 py-1 text-[11px] font-semibold text-ink">

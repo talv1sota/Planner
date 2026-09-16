@@ -456,7 +456,7 @@ export function CalendarView({
                     <div
                       className={`inline-flex items-center gap-1.5 rounded-full ${cat.tint} ${cat.ink} px-2 py-0.5 text-[10.5px] font-medium mb-2`}
                     >
-                      <span>{cat.emoji}</span>
+                      <cat.icon size={12} />
                       {cat.label}
                     </div>
                     <div className="font-display text-base leading-snug text-ink">

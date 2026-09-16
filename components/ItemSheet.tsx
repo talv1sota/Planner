@@ -167,7 +167,7 @@ export function ItemSheet({
                         : "bg-cream border-line text-ink-soft hover:border-line-strong"
                     }`}
                   >
-                    <span>{c.emoji}</span>
+                    <c.icon size={13} />
                     {c.label}
                   </button>
                 );
@@ -259,7 +259,7 @@ export function ItemSheet({
                         : "bg-cream border-line text-ink-soft hover:border-line-strong"
                     }`}
                   >
-                    <span>{t.emoji}</span>
+                    <t.icon size={13} />
                     {t.label}
                   </button>
                 );

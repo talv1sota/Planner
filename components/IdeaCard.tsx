@@ -92,7 +92,7 @@ export function IdeaCard({
         )}
         <div className="absolute inset-0 bg-gradient-to-b from-black/5 to-cream-raised/15" />
         <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-cream-raised/90 backdrop-blur px-2.5 py-1 text-[11px] font-medium text-ink">
-          <span>{category.emoji}</span>
+          <category.icon size={13} />
           {category.label}
         </div>
         {item.category !== "errands" && (
@@ -160,7 +160,7 @@ export function IdeaCard({
                 key={t}
                 className="inline-flex items-center gap-1 rounded-full bg-cream px-2 py-0.5 text-[11px] text-ink-soft"
               >
-                <span className="text-xs">{time.emoji}</span>
+                <time.icon size={11} />
                 {time.label}
               </span>
             );

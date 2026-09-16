@@ -1,24 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Search, X } from "lucide-react";
-import type { DiscoverEvent } from "@/lib/types";
+import type { CategoryKey, CostTier, DiscoverEvent } from "@/lib/types";
+import { CATEGORIES, COST_TIERS } from "@/lib/taxonomy";
 import { DiscoverCard } from "./DiscoverCard";
+import { FilterPill, MultiSelect } from "./FilterPill";
 
-type Area = "all" | "enschede" | "nl" | "de";
-
-const AREA_LABELS: Record<Area, string> = {
-  all: "Everywhere",
-  enschede: "Enschede",
-  nl: "Nearby NL towns",
-  de: "Germany",
-};
-
-function areaOf(e: DiscoverEvent): Exclude<Area, "all"> {
-  if (e.country === "DE") return "de";
-  if (e.city.startsWith("Enschede")) return "enschede";
-  return "nl";
-}
+type PopoverKey = "category" | "location" | "price" | null;
 
 export function DiscoverView({
   events,
@@ -29,13 +18,32 @@ export function DiscoverView({
   addedIds: Set<string>;
   onSelect: (event: DiscoverEvent) => void;
 }) {
-  const [area, setArea] = useState<Area>("all");
+  const [categories, setCategories] = useState<Set<CategoryKey>>(new Set());
+  const [cities, setCities] = useState<Set<string>>(new Set());
+  const [costs, setCosts] = useState<Set<CostTier>>(new Set());
   const [search, setSearch] = useState("");
+  const [open, setOpen] = useState<PopoverKey>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(null);
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [open]);
+
+  const allCities = useMemo(
+    () => [...new Set(events.map((e) => e.city))].sort(),
+    [events],
+  );
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return events
-      .filter((e) => (area === "all" ? true : areaOf(e) === area))
+      .filter((e) => categories.size === 0 || categories.has(e.category))
+      .filter((e) => cities.size === 0 || cities.has(e.city))
+      .filter((e) => costs.size === 0 || costs.has(e.cost))
       .filter((e) =>
         q
           ? e.title.toLowerCase().includes(q) ||
@@ -51,7 +59,14 @@ export function DiscoverView({
         if (b.kind === "dated") return 1;
         return a.title.localeCompare(b.title);
       });
-  }, [events, area, search]);
+  }, [events, categories, cities, costs, search]);
+
+  const hasActiveFilters = categories.size > 0 || cities.size > 0 || costs.size > 0;
+  const clearAll = () => {
+    setCategories(new Set());
+    setCities(new Set());
+    setCosts(new Set());
+  };
 
   return (
     <div className="mx-auto max-w-6xl px-6 lg:px-10 pb-24 animate-fade-in">
@@ -64,20 +79,73 @@ export function DiscoverView({
       </div>
 
       <div className="flex flex-wrap items-center gap-2 mb-6">
-        {(Object.keys(AREA_LABELS) as Area[]).map((a) => (
+        <FilterPill
+          label={chipCountLabel("Category", categories.size)}
+          active={categories.size > 0}
+          open={open === "category"}
+          onToggle={() => setOpen(open === "category" ? null : "category")}
+        >
+          <MultiSelect
+            options={CATEGORIES.map((c) => ({
+              value: c.key,
+              label: c.label,
+              leading: <c.icon size={15} className="text-ink-mute" />,
+            }))}
+            selected={categories}
+            onToggle={(v: CategoryKey) => {
+              const next = new Set(categories);
+              if (next.has(v)) next.delete(v);
+              else next.add(v);
+              setCategories(next);
+            }}
+          />
+        </FilterPill>
+
+        <FilterPill
+          label={chipCountLabel("Location", cities.size)}
+          active={cities.size > 0}
+          open={open === "location"}
+          onToggle={() => setOpen(open === "location" ? null : "location")}
+        >
+          <MultiSelect
+            options={allCities.map((c) => ({ value: c, label: c }))}
+            selected={cities}
+            onToggle={(v: string) => {
+              const next = new Set(cities);
+              if (next.has(v)) next.delete(v);
+              else next.add(v);
+              setCities(next);
+            }}
+          />
+        </FilterPill>
+
+        <FilterPill
+          label={chipCountLabel("Price", costs.size)}
+          active={costs.size > 0}
+          open={open === "price"}
+          onToggle={() => setOpen(open === "price" ? null : "price")}
+        >
+          <MultiSelect
+            options={COST_TIERS.map((c) => ({ value: c.key, label: c.label }))}
+            selected={costs}
+            onToggle={(v: CostTier) => {
+              const next = new Set(costs);
+              if (next.has(v)) next.delete(v);
+              else next.add(v);
+              setCosts(next);
+            }}
+          />
+        </FilterPill>
+
+        {hasActiveFilters && (
           <button
-            key={a}
             type="button"
-            onClick={() => setArea(a)}
-            className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-medium border transition ${
-              area === a
-                ? "bg-ink text-cream-raised border-ink"
-                : "bg-cream-raised text-ink border-line hover:border-line-strong"
-            }`}
+            onClick={clearAll}
+            className="text-sm text-ink-mute hover:text-ink transition underline-offset-4 hover:underline"
           >
-            {AREA_LABELS[a]}
+            Clear all
           </button>
-        ))}
+        )}
 
         <div className="relative ml-auto max-w-xs w-full">
           <Search
@@ -113,7 +181,7 @@ export function DiscoverView({
         <div className="py-24 text-center">
           <p className="font-display text-xl text-ink-soft">No matches</p>
           <p className="text-sm text-ink-mute mt-1">
-            Try a different area or search term.
+            Try different filters or a different search term.
           </p>
         </div>
       ) : (
@@ -130,4 +198,8 @@ export function DiscoverView({
       )}
     </div>
   );
+}
+
+function chipCountLabel(base: string, n: number) {
+  return n > 0 ? `${base} · ${n}` : base;
 }
