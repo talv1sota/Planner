@@ -19,12 +19,19 @@ export function IdeasGrid({
   const todayIso = new Date().toISOString().slice(0, 10);
   const isRepeating = (i: Item) =>
     !!(i.repeatWeekdays?.length || i.repeatDates?.length);
+  // A multi-day span (e.g. a festival running several days) belongs on the
+  // Calendar, not as its own "coming up" card - a notable multi-day thing
+  // like a car rental is modeled as separate pickup/drop-off items instead,
+  // so those still show up fine on their own.
+  const isMultiDaySpan = (i: Item) =>
+    i.kind === "dated" && !!i.endDate && i.endDate !== i.date && !isRepeating(i);
   const dated = items
     .filter(
       (i) =>
         i.kind === "dated" &&
         !isRepeating(i) &&
-        (i.endDate ?? i.date ?? "") >= todayIso,
+        !isMultiDaySpan(i) &&
+        (i.date ?? "") >= todayIso,
     )
     .sort((a, b) => (a.date ?? "").localeCompare(b.date ?? ""));
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import type { DiscoverEvent } from "@/lib/types";
 import { DiscoverCard } from "./DiscoverCard";
 
@@ -90,8 +90,18 @@ export function DiscoverView({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search Discover"
-            className="w-full rounded-full bg-cream-raised border border-line focus:border-line-strong focus:outline-none pl-9 pr-4 py-2 text-sm placeholder:text-ink-mute"
+            className="w-full rounded-full bg-cream-raised border border-line focus:border-line-strong focus:outline-none pl-9 pr-9 py-2 text-sm placeholder:text-ink-mute"
           />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-mute hover:text-ink transition"
+              aria-label="Clear search"
+            >
+              <X size={14} />
+            </button>
+          )}
         </div>
 
         <div className="w-full text-xs text-ink-mute">
