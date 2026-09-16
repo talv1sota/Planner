@@ -23,11 +23,11 @@ function areaOf(e: DiscoverEvent): Exclude<Area, "all"> {
 export function DiscoverView({
   events,
   addedIds,
-  onAdd,
+  onSelect,
 }: {
   events: DiscoverEvent[];
   addedIds: Set<string>;
-  onAdd: (event: DiscoverEvent, chosenDate?: string) => Promise<void> | void;
+  onSelect: (event: DiscoverEvent) => void;
 }) {
   const [area, setArea] = useState<Area>("all");
   const [search, setSearch] = useState("");
@@ -113,7 +113,7 @@ export function DiscoverView({
               key={event.id}
               event={event}
               added={addedIds.has(event.id)}
-              onAdd={(chosenDate) => onAdd(event, chosenDate)}
+              onOpen={() => onSelect(event)}
             />
           ))}
         </div>

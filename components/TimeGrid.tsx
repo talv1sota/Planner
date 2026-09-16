@@ -122,7 +122,7 @@ export function TimeGrid({
 
   return (
     <div className="rounded-[22px] bg-cream-raised border border-line flex flex-col flex-1 min-h-0 overflow-hidden">
-      <div className="flex border-b border-line shrink-0" style={{ paddingLeft: GUTTER }}>
+      <div className="flex border-b border-line shrink-0 bg-cream" style={{ paddingLeft: GUTTER }}>
         {days.map((d) => {
           const isToday = isSameDay(d, today);
           return (
@@ -131,17 +131,14 @@ export function TimeGrid({
               type="button"
               onClick={() => onSelectDay?.(d)}
               disabled={!onSelectDay}
-              className="flex-1 min-w-0 py-2 flex items-center justify-center gap-1.5 border-l border-line first:border-l-0 hover:bg-cream/50 transition disabled:hover:bg-transparent"
+              className="flex-1 min-w-0 py-2 text-center hover:bg-cream/50 transition disabled:hover:bg-transparent"
             >
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-mute">
-                {format(d, "EEE")}
-              </span>
               <span
-                className={`inline-flex items-center justify-center h-6 min-w-6 px-1.5 rounded-full text-xs font-medium ${
-                  isToday ? "bg-ink text-cream-raised" : "text-ink"
+                className={`text-[11px] font-semibold uppercase tracking-wider ${
+                  isToday ? "text-ink" : "text-ink-mute"
                 }`}
               >
-                {format(d, "d")}
+                {format(d, "EEE")} {format(d, "d")}
               </span>
             </button>
           );

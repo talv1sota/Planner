@@ -201,12 +201,17 @@ export async function addDiscoveredEvent(data: {
   familyId: string;
   discoveredId: string;
   addedById: string;
-  // For events with no fixed schedule (repeatWeekdays/repeatDates unset):
-  // the family picked one specific date to attend. This path is NOT
-  // idempotency-tracked, since it's a deliberate one-off choice they may
-  // want to repeat for a different date later (e.g. "this month's meetup
-  // but not next month's").
-  chosenDate?: string;
+  // One or more specific dates the family chose (a subset of a multi-day
+  // event, or one/several meetups with no fixed schedule to auto-place).
+  // This path is NOT idempotency-tracked, since it's a deliberate choice
+  // they may want to repeat differently later (e.g. this month's meetup
+  // but not next month's).
+  chosenDates?: string[];
+  // Always sent from the detail sheet (pre-filled from the event's own
+  // defaults, editable before adding) — used as-is, not merged with event
+  // defaults here.
+  startTime: string | null;
+  endTime: string | null;
 }) {
   const viewer = await requireViewer();
   if (data.familyId !== viewer.familyId) throw new Error("Not authorized");
@@ -221,17 +226,19 @@ export async function addDiscoveredEvent(data: {
     `Source: ${event.sourceName} — ${event.sourceUrl}`,
   ].filter(Boolean);
 
-  if (data.chosenDate) {
+  if (data.chosenDates?.length) {
+    const sorted = [...data.chosenDates].sort();
     const item = await db.item.create({
       data: {
         familyId: data.familyId,
         title: event.title,
         category: event.category,
         kind: "dated",
-        date: data.chosenDate,
+        date: sorted[0],
+        repeatDates: sorted.length > 1 ? sorted.join(",") : null,
         timeOfDay: event.timeOfDay?.length ? event.timeOfDay.join(",") : "allday",
-        startTime: event.startTime ?? null,
-        endTime: event.endTime ?? null,
+        startTime: data.startTime,
+        endTime: data.endTime,
         cost: event.cost,
         pricePerPerson: event.pricePerPerson ?? null,
         location:
@@ -292,8 +299,8 @@ export async function addDiscoveredEvent(data: {
         repeatWeekdays: hasWeeklyPattern ? event.repeatWeekdays!.join(",") : null,
         repeatDates: hasDateList ? event.repeatDates!.join(",") : null,
         timeOfDay: event.timeOfDay?.length ? event.timeOfDay.join(",") : "allday",
-        startTime: event.startTime ?? null,
-        endTime: event.endTime ?? null,
+        startTime: data.startTime,
+        endTime: data.endTime,
         cost: event.cost,
         pricePerPerson: event.pricePerPerson ?? null,
         location:

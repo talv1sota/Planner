@@ -7,6 +7,7 @@ import { FilterBar } from "./FilterBar";
 import { IdeasGrid } from "./IdeasGrid";
 import { CalendarView } from "./CalendarView";
 import { DiscoverView } from "./DiscoverView";
+import { DiscoverDetailSheet } from "./DiscoverDetailSheet";
 import { ViewToggle } from "./ViewToggle";
 import { ItemSheet } from "./ItemSheet";
 import { FamilyProvider } from "./FamilyContext";
@@ -53,6 +54,7 @@ export function PlannerApp({
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editing, setEditing] = useState<Item | null>(null);
   const [defaultDate, setDefaultDate] = useState<string | undefined>(undefined);
+  const [discoverDetail, setDiscoverDetail] = useState<DiscoverEvent | null>(null);
   const [discoverAdded, setDiscoverAdded] = useState<Set<string>>(
     () => new Set(addedDiscoverIds),
   );
@@ -97,6 +99,13 @@ export function PlannerApp({
     () => applyFilters(optimisticItems, filters),
     [optimisticItems, filters],
   );
+
+  // Calendar has no FilterBar of its own — it still honors the header
+  // search box, but ignores the category/cost/time/when/interested pills.
+  const calendarFiltered = useMemo(() => {
+    const searchOnly: Filters = { ...INITIAL_FILTERS, search: filters.search };
+    return applyFilters(optimisticItems, searchOnly);
+  }, [optimisticItems, filters.search]);
 
   const handleToggleInterested = (itemId: string) => {
     startTransition(async () => {
@@ -159,16 +168,23 @@ export function PlannerApp({
     await serverSkipOccurrence(itemId, isoDate);
   };
 
-  const handleAddDiscovered = async (event: DiscoverEvent, chosenDate?: string) => {
+  const handleAddDiscovered = async (
+    event: DiscoverEvent,
+    dates: string[],
+    startTime: string,
+    endTime: string,
+  ) => {
     await serverAddDiscoveredEvent({
       familyId,
       discoveredId: event.id,
       addedById: viewerId,
-      chosenDate,
+      chosenDates: dates.length ? dates : undefined,
+      startTime: startTime || null,
+      endTime: startTime ? endTime || null : null,
     });
     // A chosen-date add is deliberately repeatable (e.g. this month's
     // meetup but not next month's), so it never gets marked "Added".
-    if (!chosenDate) {
+    if (dates.length === 0) {
       setDiscoverAdded((prev) => new Set(prev).add(event.id));
     }
   };
@@ -218,7 +234,7 @@ export function PlannerApp({
         <ViewToggle value={view} onChange={setView} />
       </div>
 
-      {view !== "discover" && (
+      {view === "ideas" && (
         <FilterBar
           filters={filters}
           onChange={setFilters}
@@ -238,7 +254,7 @@ export function PlannerApp({
           />
         ) : view === "calendar" ? (
           <CalendarView
-            items={filtered}
+            items={calendarFiltered}
             onToggleInterested={handleToggleInterested}
             onEdit={openEdit}
             onAddForDate={openAddForDate}
@@ -248,10 +264,22 @@ export function PlannerApp({
           <DiscoverView
             events={DISCOVER_EVENTS}
             addedIds={discoverAdded}
-            onAdd={handleAddDiscovered}
+            onSelect={setDiscoverDetail}
           />
         )}
       </main>
+
+      {discoverDetail && (
+        <DiscoverDetailSheet
+          key={discoverDetail.id}
+          event={discoverDetail}
+          added={discoverAdded.has(discoverDetail.id)}
+          onClose={() => setDiscoverDetail(null)}
+          onAdd={(dates, startTime, endTime) =>
+            handleAddDiscovered(discoverDetail, dates, startTime, endTime)
+          }
+        />
+      )}
 
       <ItemSheet
         key={editing?.id ?? `new-${defaultDate ?? "blank"}`}
