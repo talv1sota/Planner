@@ -46,6 +46,8 @@ export type Item = {
   /** Approximate price per person for sort/tooltip display */
   pricePerPerson?: number;
   location?: string;
+  /** Town name, used to pick a representative photo for the card header. */
+  city?: string;
   notes?: string;
   addedBy: string;
   interestedBy: string[];

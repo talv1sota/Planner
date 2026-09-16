@@ -4,6 +4,7 @@ import { MapPin, CalendarDays, Heart, Repeat, Clock } from "lucide-react";
 import { format, parseISO, isSameDay, isSameMonth } from "date-fns";
 import type { Item } from "@/lib/types";
 import { CATEGORY_BY_KEY, COST_BY_KEY, TIME_BY_KEY } from "@/lib/taxonomy";
+import { getTownImage } from "@/lib/townImages";
 import { Avatar, AvatarStack } from "./Avatar";
 import { useFamily } from "./FamilyContext";
 
@@ -62,6 +63,7 @@ export function IdeaCard({
   const hideInterest =
     item.category === "errands" ||
     !!(item.repeatWeekdays?.length || item.repeatDates?.length);
+  const townImage = getTownImage(item.city);
 
   return (
     <article
@@ -78,8 +80,17 @@ export function IdeaCard({
       className="group relative flex flex-col rounded-[22px] bg-cream-raised border border-line overflow-hidden hover:border-line-strong transition shadow-[0_1px_0_rgba(42,38,32,0.02)] cursor-pointer text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-ink/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
     >
       <div className={`relative h-28 ${category.ink}`}>
-        {categoryArt(item.id, category.tint.replace("bg-", "text-"))}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-cream-raised/15" />
+        {townImage ? (
+          <img
+            src={townImage}
+            alt={item.city ?? ""}
+            loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        ) : (
+          categoryArt(item.id, category.tint.replace("bg-", "text-"))
+        )}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/5 to-cream-raised/15" />
         <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-cream-raised/90 backdrop-blur px-2.5 py-1 text-[11px] font-medium text-ink">
           <span>{category.emoji}</span>
           {category.label}

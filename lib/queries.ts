@@ -43,6 +43,7 @@ export async function getItems(familyId: string): Promise<Item[]> {
     cost: r.cost as Item["cost"],
     pricePerPerson: r.pricePerPerson ?? undefined,
     location: r.location ?? undefined,
+    city: r.city ?? undefined,
     notes: r.notes ?? undefined,
     addedBy: r.addedById,
     interestedBy: r.interests.map((i) => i.memberId),

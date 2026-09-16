@@ -5,8 +5,13 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { setFamilyToken, setViewerId } from "@/lib/viewer";
 
+// Lowercase, no ambiguous 0/o/1/i/l — short enough to read out loud or type on a phone.
+const INVITE_CODE_CHARS = "abcdefghjkmnpqrstuvwxyz23456789";
 function generateInviteCode() {
-  return randomBytes(4).toString("hex"); // 8 hex chars, e.g. "a3f1b90c"
+  const bytes = randomBytes(6);
+  let s = "";
+  for (let i = 0; i < 6; i++) s += INVITE_CODE_CHARS[bytes[i] % INVITE_CODE_CHARS.length];
+  return s;
 }
 
 export async function createFamily(data: {

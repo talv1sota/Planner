@@ -90,6 +90,7 @@ export async function createItem(data: {
   cost: string;
   pricePerPerson?: number;
   location?: string;
+  city?: string;
   notes?: string;
   addedById: string;
 }) {
@@ -112,6 +113,7 @@ export async function createItem(data: {
       cost: data.cost,
       pricePerPerson: data.pricePerPerson ?? null,
       location: data.location || null,
+      city: data.city || null,
       notes: data.notes || null,
       addedById: data.addedById,
     },
@@ -141,6 +143,7 @@ export async function updateItem(
     cost: string;
     pricePerPerson?: number;
     location?: string;
+    city?: string;
     notes?: string;
     addedById: string;
   },
@@ -163,6 +166,7 @@ export async function updateItem(
       cost: data.cost,
       pricePerPerson: data.pricePerPerson ?? null,
       location: data.location || null,
+      city: data.city || null,
       notes: data.notes || null,
       addedById: data.addedById,
     },
@@ -233,6 +237,7 @@ export async function addDiscoveredEvent(data: {
         location:
           event.location ??
           `${event.city}, ${event.country === "DE" ? "Germany" : "Netherlands"}`,
+        city: event.city,
         notes: noteLines.join("\n"),
         addedById: data.addedById,
       },
@@ -294,6 +299,7 @@ export async function addDiscoveredEvent(data: {
         location:
           event.location ??
           `${event.city}, ${event.country === "DE" ? "Germany" : "Netherlands"}`,
+        city: event.city,
         notes: noteLines.join("\n"),
         addedById: data.addedById,
       },

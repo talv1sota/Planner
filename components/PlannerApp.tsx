@@ -121,6 +121,7 @@ export function PlannerApp({
         cost: item.cost,
         pricePerPerson: item.pricePerPerson,
         location: item.location,
+        city: item.city,
         notes: item.notes,
         addedById: item.addedBy,
       });
@@ -140,6 +141,7 @@ export function PlannerApp({
         cost: item.cost,
         pricePerPerson: item.pricePerPerson,
         location: item.location,
+        city: item.city,
         notes: item.notes,
         addedById: item.addedBy,
       });

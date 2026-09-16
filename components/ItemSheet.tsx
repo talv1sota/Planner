@@ -56,6 +56,7 @@ export function ItemSheet({
     (initial?.cost as CostTier) ?? "free",
   );
   const [location, setLocation] = useState(initial?.location ?? "");
+  const [city, setCity] = useState(initial?.city ?? "");
   const [notes, setNotes] = useState(initial?.notes ?? "");
   const [addedById, setAddedById] = useState(initial?.addedBy ?? viewerId);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -98,6 +99,7 @@ export function ItemSheet({
       cost: cost,
       pricePerPerson: initial?.pricePerPerson,
       location: location.trim() || undefined,
+      city: city.trim() || undefined,
       notes: notes.trim() || undefined,
       addedBy: addedById,
       interestedBy: initial?.interestedBy ?? [addedById],
@@ -326,6 +328,16 @@ export function ItemSheet({
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               placeholder="Optional"
+              className="w-full rounded-xl bg-cream border border-line px-3.5 py-2.5 text-sm placeholder:text-ink-mute focus:outline-none focus:border-line-strong"
+            />
+          </Field>
+
+          <Field label="Town">
+            <input
+              type="text"
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              placeholder="e.g. Enschede — used to pick a card photo"
               className="w-full rounded-xl bg-cream border border-line px-3.5 py-2.5 text-sm placeholder:text-ink-mute focus:outline-none focus:border-line-strong"
             />
           </Field>

@@ -77,6 +77,8 @@ model Item {
   cost            String
   pricePerPerson  Int?
   location        String?
+  // Town name, used to pick a representative photo for the card header.
+  city            String?
   notes           String?
   addedBy         FamilyMember @relation("AddedBy", fields: [addedById], references: [id], onDelete: Restrict)
   addedById       String

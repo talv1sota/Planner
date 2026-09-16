@@ -20,6 +20,17 @@ import type { Item } from "@/lib/types";
 import { CATEGORY_BY_KEY } from "@/lib/taxonomy";
 import { AvatarStack } from "./Avatar";
 import { useFamily } from "./FamilyContext";
+import { DayTimeline } from "./DayTimeline";
+
+// Timed items first (chronological), untimed/all-day items after.
+function sortByTime(items: Item[]): Item[] {
+  return [...items].sort((a, b) => {
+    if (a.startTime && b.startTime) return a.startTime.localeCompare(b.startTime);
+    if (a.startTime) return -1;
+    if (b.startTime) return 1;
+    return 0;
+  });
+}
 
 const WEEKDAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 
@@ -53,7 +64,7 @@ export function CalendarView({
 
   const itemsOnDay = (d: Date) => {
     const iso = toIso(d);
-    return datedItems.filter((i) => {
+    const matches = datedItems.filter((i) => {
       if (i.excludeDates?.includes(iso)) return false;
       if (i.repeatWeekdays && i.repeatWeekdays.length > 0) {
         return iso >= i.date! && i.repeatWeekdays.includes(WEEKDAY_KEYS[d.getDay()]);
@@ -65,6 +76,7 @@ export function CalendarView({
       const end = i.endDate ? parseISO(i.endDate) : start;
       return isWithinInterval(d, { start, end });
     });
+    return sortByTime(matches);
   };
 
   const isRepeating = (i: Item) =>
@@ -204,6 +216,8 @@ export function CalendarView({
               Nothing scheduled for this day. Tap the button below to add something.
             </p>
           ) : (
+            <>
+            <DayTimeline items={selectedItems} onEdit={onEdit} />
             <ul className="space-y-3">
               {selectedItems.map((it) => {
                 const cat = CATEGORY_BY_KEY[it.category];
@@ -302,6 +316,7 @@ export function CalendarView({
                 );
               })}
             </ul>
+            </>
           )}
 
           <button
