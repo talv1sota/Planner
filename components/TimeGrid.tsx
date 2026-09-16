@@ -26,8 +26,9 @@ const PX_PER_HOUR = 56;
 const DEFAULT_DURATION_MIN = 60; // for a start time with no known end
 const MIN_BLOCK_MIN = 30; // floor duration so short/point events stay legible
 const GUTTER = 44;
-const ALLDAY_BAR_H = 18;
-const ALLDAY_GAP = 3;
+const ALLDAY_BAR_H = 16;
+const ALLDAY_GAP = 2;
+const ALLDAY_PAD = 4; // top/bottom breathing room, baked into the height math below (not CSS padding) so it isn't double-counted against the explicit container height
 
 /** Google-Calendar-style Week/Day view: a shared hour axis with one column
  *  per visible day, events positioned by start time and sized by duration
@@ -96,7 +97,10 @@ export function TimeGrid({
     }
     return { ...b, row };
   });
-  const allDayHeight = rowEnds.length > 0 ? rowEnds.length * (ALLDAY_BAR_H + ALLDAY_GAP) + 6 : 0;
+  const allDayHeight =
+    rowEnds.length > 0
+      ? rowEnds.length * (ALLDAY_BAR_H + ALLDAY_GAP) - ALLDAY_GAP + ALLDAY_PAD * 2
+      : 0;
 
   // ---- Timed events, one column per day ----
   const columns = days.map((d) => {
@@ -121,58 +125,56 @@ export function TimeGrid({
   for (let m = rangeStart; m <= rangeEnd; m += 60) hourMarks.push(m);
 
   return (
-    <div className="rounded-[22px] bg-cream-raised border border-line flex flex-col flex-1 min-h-0 overflow-hidden">
-      <div className="flex border-b border-line shrink-0 bg-cream" style={{ paddingLeft: GUTTER }}>
-        {days.map((d) => {
-          const isToday = isSameDay(d, today);
-          return (
-            <button
-              key={toIso(d)}
-              type="button"
-              onClick={() => onSelectDay?.(d)}
-              disabled={!onSelectDay}
-              className="flex-1 min-w-0 py-2 text-center hover:bg-cream/50 transition disabled:hover:bg-transparent"
-            >
-              <span
-                className={`text-[11px] font-semibold uppercase tracking-wider ${
-                  isToday ? "text-ink" : "text-ink-mute"
-                }`}
-              >
-                {format(d, "EEE")} {format(d, "d")}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-      {allDayHeight > 0 && (
-        <div
-          className="relative border-b border-line shrink-0 py-1.5"
-          style={{ paddingLeft: GUTTER, height: allDayHeight }}
-        >
-          {placedBars.map(({ item, startCol, endCol, row }) => {
-            const cat = CATEGORY_BY_KEY[item.category];
+    <div className="rounded-[22px] bg-cream-raised border border-line flex flex-col flex-1 min-h-0 overflow-clip">
+      <div className="sticky top-[105px] sm:top-[97px] lg:top-0 z-20 bg-cream-raised shrink-0">
+        <div className="flex border-b border-line bg-cream" style={{ paddingLeft: GUTTER }}>
+          {days.map((d) => {
+            const isToday = isSameDay(d, today);
             return (
               <button
-                key={item.id}
+                key={toIso(d)}
                 type="button"
-                onClick={() => onEdit(item)}
-                title={item.title}
-                className={`absolute ${cat.tint} ${cat.ink} text-[11px] font-medium rounded truncate flex items-center gap-1 px-1.5 hover:brightness-95 transition`}
-                style={{
-                  top: row * (ALLDAY_BAR_H + ALLDAY_GAP),
-                  height: ALLDAY_BAR_H,
-                  left: `calc(${GUTTER}px + ${(startCol / days.length) * 100}% + 2px)`,
-                  width: `calc(${((endCol - startCol + 1) / days.length) * 100}% - 4px)`,
-                }}
+                onClick={() => onSelectDay?.(d)}
+                disabled={!onSelectDay}
+                className="flex-1 min-w-0 py-2 text-center text-[11px] font-semibold uppercase tracking-wider hover:bg-cream/50 transition disabled:hover:bg-transparent"
               >
-                {isRepeating(item) && <Repeat size={9} className="shrink-0" strokeWidth={2.5} />}
-                <span className="truncate">{item.title}</span>
+                <span className={isToday ? "text-ink" : "text-ink-mute"}>
+                  {format(d, "EEE")} {format(d, "d")}
+                </span>
               </button>
             );
           })}
         </div>
-      )}
+
+        {allDayHeight > 0 && (
+          <div
+            className="relative border-b border-line"
+            style={{ paddingLeft: GUTTER, height: allDayHeight }}
+          >
+            {placedBars.map(({ item, startCol, endCol, row }) => {
+              const cat = CATEGORY_BY_KEY[item.category];
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => onEdit(item)}
+                  title={item.title}
+                  className={`absolute ${cat.tint} ${cat.ink} text-[11px] font-medium rounded truncate flex items-center gap-1 px-1.5 hover:brightness-95 transition`}
+                  style={{
+                    top: row * (ALLDAY_BAR_H + ALLDAY_GAP) + ALLDAY_PAD,
+                    height: ALLDAY_BAR_H,
+                    left: `calc(${GUTTER}px + ${(startCol / days.length) * 100}% + 2px)`,
+                    width: `calc(${((endCol - startCol + 1) / days.length) * 100}% - 4px)`,
+                  }}
+                >
+                  {isRepeating(item) && <Repeat size={9} className="shrink-0" strokeWidth={2.5} />}
+                  <span className="truncate">{item.title}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
         <div className="relative flex" style={{ height: gridHeight }}>

@@ -101,8 +101,7 @@ export function CalendarView({
   const isMultiDaySpan = (i: Item) =>
     i.kind === "dated" && !!i.endDate && i.endDate !== i.date && !isRepeating(i);
 
-  const selectedDay = selected ?? new Date();
-  const selectedItems = itemsOnDay(selectedDay);
+  const selectedItems = selected ? itemsOnDay(selected) : [];
 
   const weeks: Date[][] = [];
   for (let i = 0; i < days.length; i += 7) weeks.push(days.slice(i, i + 7));
@@ -255,7 +254,9 @@ export function CalendarView({
       )}
 
       {viewMode === "month" && (
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 flex-1 min-h-0">
+      <div
+        className={`grid grid-cols-1 gap-6 flex-1 min-h-0 ${selected ? "lg:grid-cols-[1fr_320px]" : ""}`}
+      >
         <div className="rounded-[22px] bg-cream-raised border border-line overflow-hidden flex flex-col">
           <div className="grid grid-cols-7 border-b border-line bg-cream shrink-0">
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
@@ -280,7 +281,7 @@ export function CalendarView({
                     const idx = weekIdx * 7 + colIdx;
                     const inMonth = isSameMonth(day, cursor);
                     const dayItems = itemsOnDay(day).filter((it) => !spanIds.has(it.id));
-                    const isSelected = isSameDay(day, selectedDay);
+                    const isSelected = !!selected && isSameDay(day, selected);
                     const isToday = isSameDay(day, new Date());
                     return (
                       <button
@@ -385,16 +386,25 @@ export function CalendarView({
           </div>
         </div>
 
+        {selected && (
         <aside className="rounded-[22px] bg-cream-raised border border-line p-5 flex flex-col gap-4 h-fit lg:h-full lg:overflow-y-auto">
-          <div>
-            <div className="text-[11px] uppercase tracking-[0.16em] text-ink-mute font-semibold">
-              {isSameDay(selectedDay, new Date())
-                ? "Today"
-                : format(selectedDay, "EEEE")}
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="text-[11px] uppercase tracking-[0.16em] text-ink-mute font-semibold">
+                {isSameDay(selected, new Date()) ? "Today" : format(selected, "EEEE")}
+              </div>
+              <div className="font-display text-[24px] tracking-tight mt-0.5">
+                {format(selected, "MMMM d")}
+              </div>
             </div>
-            <div className="font-display text-[24px] tracking-tight mt-0.5">
-              {format(selectedDay, "MMMM d")}
-            </div>
+            <button
+              type="button"
+              onClick={() => setSelected(null)}
+              aria-label="Close"
+              className="h-8 w-8 shrink-0 rounded-full inline-flex items-center justify-center hover:bg-cream transition"
+            >
+              <X size={16} />
+            </button>
           </div>
 
           {selectedItems.length === 0 ? (
@@ -459,12 +469,12 @@ export function CalendarView({
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          onSkipOccurrence(it.id, toIso(selectedDay));
+                          onSkipOccurrence(it.id, toIso(selected));
                         }}
                         className="mt-2.5 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium border border-line bg-cream-raised text-ink-soft hover:border-line-strong hover:text-ink transition"
                       >
                         <X size={11} strokeWidth={2.4} />
-                        Skip just {format(selectedDay, "MMM d")}
+                        Skip just {format(selected, "MMM d")}
                       </button>
                     )}
                     {!hideInterest(it) && (
@@ -504,13 +514,14 @@ export function CalendarView({
 
           <button
             type="button"
-            onClick={() => onAddForDate(toIso(selectedDay))}
+            onClick={() => onAddForDate(toIso(selected))}
             className="mt-1 inline-flex items-center justify-center gap-1.5 rounded-full border border-dashed border-line-strong text-ink-soft hover:text-ink hover:border-ink/40 hover:bg-cream transition py-2.5 text-sm font-medium"
           >
             <Plus size={15} strokeWidth={2.2} />
-            Add for {format(selectedDay, "MMM d")}
+            Add for {format(selected, "MMM d")}
           </button>
         </aside>
+        )}
       </div>
       )}
     </div>
