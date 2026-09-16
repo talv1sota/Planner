@@ -81,6 +81,10 @@ export function DiscoverCard({
           categoryArt(event.id, category.tint.replace("bg-", "text-"))
         )}
         <div className="absolute inset-0 bg-gradient-to-b from-black/5 to-cream-raised/15" />
+        <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-cream-raised/90 backdrop-blur px-2.5 py-1 text-[11px] font-medium text-ink">
+          <category.icon size={13} />
+          {category.label}
+        </div>
         {added && (
           <div className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-[#DDEAD0] px-2.5 py-1 text-[11px] font-semibold text-[#3F5A2B]">
             <Check size={11} strokeWidth={2.6} />

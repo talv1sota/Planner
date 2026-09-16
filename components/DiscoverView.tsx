@@ -2,12 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Search, X } from "lucide-react";
-import type { CategoryKey, CostTier, DiscoverEvent } from "@/lib/types";
-import { CATEGORIES, COST_TIERS } from "@/lib/taxonomy";
+import type { CategoryKey, DiscoverEvent } from "@/lib/types";
+import { CATEGORIES } from "@/lib/taxonomy";
 import { DiscoverCard } from "./DiscoverCard";
 import { FilterPill, MultiSelect } from "./FilterPill";
 
-type PopoverKey = "category" | "location" | "price" | null;
+type PopoverKey = "category" | "location" | null;
 
 export function DiscoverView({
   events,
@@ -20,7 +20,6 @@ export function DiscoverView({
 }) {
   const [categories, setCategories] = useState<Set<CategoryKey>>(new Set());
   const [cities, setCities] = useState<Set<string>>(new Set());
-  const [costs, setCosts] = useState<Set<CostTier>>(new Set());
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState<PopoverKey>(null);
 
@@ -43,7 +42,6 @@ export function DiscoverView({
     return events
       .filter((e) => categories.size === 0 || categories.has(e.category))
       .filter((e) => cities.size === 0 || cities.has(e.city))
-      .filter((e) => costs.size === 0 || costs.has(e.cost))
       .filter((e) =>
         q
           ? e.title.toLowerCase().includes(q) ||
@@ -59,13 +57,12 @@ export function DiscoverView({
         if (b.kind === "dated") return 1;
         return a.title.localeCompare(b.title);
       });
-  }, [events, categories, cities, costs, search]);
+  }, [events, categories, cities, search]);
 
-  const hasActiveFilters = categories.size > 0 || cities.size > 0 || costs.size > 0;
+  const hasActiveFilters = categories.size > 0 || cities.size > 0;
   const clearAll = () => {
     setCategories(new Set());
     setCities(new Set());
-    setCosts(new Set());
   };
 
   return (
@@ -115,24 +112,6 @@ export function DiscoverView({
               if (next.has(v)) next.delete(v);
               else next.add(v);
               setCities(next);
-            }}
-          />
-        </FilterPill>
-
-        <FilterPill
-          label={chipCountLabel("Price", costs.size)}
-          active={costs.size > 0}
-          open={open === "price"}
-          onToggle={() => setOpen(open === "price" ? null : "price")}
-        >
-          <MultiSelect
-            options={COST_TIERS.map((c) => ({ value: c.key, label: c.label }))}
-            selected={costs}
-            onToggle={(v: CostTier) => {
-              const next = new Set(costs);
-              if (next.has(v)) next.delete(v);
-              else next.add(v);
-              setCosts(next);
             }}
           />
         </FilterPill>
