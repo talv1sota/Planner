@@ -254,7 +254,9 @@ export function CalendarView({
       )}
 
       {viewMode === "month" && (
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 flex-1 min-h-0">
+      <div
+        className={`grid grid-cols-1 gap-6 flex-1 min-h-0 ${selected ? "lg:grid-cols-[1fr_320px]" : ""}`}
+      >
         <div className="rounded-[22px] bg-cream-raised border border-line overflow-hidden flex flex-col">
           <div className="grid grid-cols-7 border-b border-line bg-cream shrink-0">
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (

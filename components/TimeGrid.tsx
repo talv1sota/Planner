@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { format, isSameDay } from "date-fns";
 import { CATEGORY_BY_KEY } from "@/lib/taxonomy";
 import type { Item } from "@/lib/types";
@@ -115,15 +116,29 @@ export function TimeGrid({
     return { date: d, spans };
   });
 
-  const allStarts = columns.flatMap((c) => c.spans.map((s) => s.start));
-  const allEnds = columns.flatMap((c) => c.spans.map((s) => s.end));
-  const rangeStart = allStarts.length ? Math.min(6 * 60, Math.floor(Math.min(...allStarts) / 60) * 60) : 7 * 60;
-  const rangeEnd = allEnds.length ? Math.max(21 * 60, Math.ceil(Math.max(...allEnds) / 60) * 60) : 20 * 60;
+  // Full 24h, like Google Calendar itself - you scroll to whatever part of
+  // the day you want, rather than an arbitrary window being clipped off.
+  const rangeStart = 0;
+  const rangeEnd = 24 * 60;
   const pxPerMin = PX_PER_HOUR / 60;
   const gridHeight = (rangeEnd - rangeStart) * pxPerMin + EDGE_PAD * 2;
 
   const hourMarks: number[] = [];
-  for (let m = rangeStart; m <= rangeEnd; m += 60) hourMarks.push(m);
+  for (let m = rangeStart; m < rangeEnd; m += 60) hourMarks.push(m);
+
+  // Land the initial scroll near the relevant part of the day instead of
+  // dumping the viewer at midnight: a bit before the earliest event, or a
+  // sensible default (6am) when the visible days have nothing timed at all.
+  const allStarts = columns.flatMap((c) => c.spans.map((s) => s.start));
+  const initialScrollMinute = allStarts.length
+    ? Math.max(0, Math.min(6 * 60, Math.floor(Math.min(...allStarts) / 60) * 60))
+    : 6 * 60;
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const daysKey = days.map(toIso).join(",");
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: (initialScrollMinute - rangeStart) * pxPerMin });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [daysKey]);
 
   return (
     <div className="rounded-[22px] bg-cream-raised border border-line flex flex-col flex-1 min-h-0 overflow-clip">
@@ -177,7 +192,7 @@ export function TimeGrid({
         )}
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
+      <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
         <div className="relative flex" style={{ height: gridHeight }}>
           <div className="relative shrink-0" style={{ width: GUTTER }}>
             {hourMarks.map((m) => (
