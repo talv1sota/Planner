@@ -21,7 +21,17 @@ import {
   subWeeks,
   subYears,
 } from "date-fns";
-import { ChevronLeft, ChevronRight, Clock, Heart, MapPin, Plus, Repeat, X } from "lucide-react";
+import {
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Heart,
+  MapPin,
+  Plus,
+  Repeat,
+  X,
+} from "lucide-react";
 import type { Item } from "@/lib/types";
 import { CATEGORY_BY_KEY } from "@/lib/taxonomy";
 import { AvatarStack } from "./Avatar";
@@ -254,9 +264,7 @@ export function CalendarView({
       )}
 
       {viewMode === "month" && (
-      <div
-        className={`grid grid-cols-1 gap-6 flex-1 min-h-0 ${selected ? "lg:grid-cols-[1fr_320px]" : ""}`}
-      >
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 flex-1 min-h-0">
         <div className="rounded-[22px] bg-cream-raised border border-line overflow-hidden flex flex-col">
           <div className="grid grid-cols-7 border-b border-line bg-cream shrink-0">
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
@@ -521,6 +529,14 @@ export function CalendarView({
             Add for {format(selected, "MMM d")}
           </button>
         </aside>
+        )}
+        {!selected && (
+          <div className="hidden lg:flex rounded-[22px] border border-dashed border-line items-center justify-center p-5 text-center">
+            <div>
+              <CalendarDays size={22} className="mx-auto text-ink-mute mb-2" strokeWidth={1.6} />
+              <p className="text-sm text-ink-mute">Click a day to see what&apos;s planned</p>
+            </div>
+          </div>
         )}
       </div>
       )}
