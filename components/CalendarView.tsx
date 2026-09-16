@@ -20,7 +20,6 @@ import type { Item } from "@/lib/types";
 import { CATEGORY_BY_KEY } from "@/lib/taxonomy";
 import { AvatarStack } from "./Avatar";
 import { useFamily } from "./FamilyContext";
-import { DayTimeline } from "./DayTimeline";
 
 // Timed items first (chronological), untimed/all-day items after.
 function sortByTime(items: Item[]): Item[] {
@@ -312,8 +311,6 @@ export function CalendarView({
               Nothing scheduled for this day. Tap the button below to add something.
             </p>
           ) : (
-            <>
-            <DayTimeline items={selectedItems} onEdit={onEdit} />
             <ul className="space-y-3">
               {selectedItems.map((it) => {
                 const cat = CATEGORY_BY_KEY[it.category];
@@ -412,7 +409,6 @@ export function CalendarView({
                 );
               })}
             </ul>
-            </>
           )}
 
           <button
