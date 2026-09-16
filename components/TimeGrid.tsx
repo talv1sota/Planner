@@ -131,18 +131,18 @@ export function TimeGrid({
               type="button"
               onClick={() => onSelectDay?.(d)}
               disabled={!onSelectDay}
-              className="flex-1 min-w-0 py-2 text-center border-l border-line first:border-l-0 hover:bg-cream/50 transition disabled:hover:bg-transparent"
+              className="flex-1 min-w-0 py-2 flex items-center justify-center gap-1.5 border-l border-line first:border-l-0 hover:bg-cream/50 transition disabled:hover:bg-transparent"
             >
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-mute">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-mute">
                 {format(d, "EEE")}
-              </div>
-              <div
-                className={`inline-flex items-center justify-center h-7 w-7 rounded-full text-sm font-medium mt-0.5 ${
+              </span>
+              <span
+                className={`inline-flex items-center justify-center h-6 min-w-6 px-1.5 rounded-full text-xs font-medium ${
                   isToday ? "bg-ink text-cream-raised" : "text-ink"
                 }`}
               >
                 {format(d, "d")}
-              </div>
+              </span>
             </button>
           );
         })}
