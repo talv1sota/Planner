@@ -70,7 +70,7 @@ export function IdeasGrid({
 
   return (
     <div className="mx-auto max-w-6xl px-6 lg:px-10 pb-24">
-      <Section eyebrow="On the calendar" title="Coming up">
+      <Section title="Upcoming">
         {dated.length > 0 ? (
           <Grid items={dated} onToggleInterested={onToggleInterested} onEdit={onEdit} />
         ) : (
@@ -84,29 +84,17 @@ export function IdeasGrid({
 }
 
 function Section({
-  eyebrow,
   title,
-  subtitle,
   children,
 }: {
-  eyebrow: string;
   title: string;
-  subtitle?: string;
   children: React.ReactNode;
 }) {
   return (
     <section>
-      <div className="mb-5">
-        <div className="text-[11px] uppercase tracking-[0.16em] text-ink-mute font-semibold">
-          {eyebrow}
-        </div>
-        <h2 className="font-display text-[28px] lg:text-[32px] font-medium tracking-tight mt-1">
-          {title}
-        </h2>
-        {subtitle && (
-          <p className="text-sm text-ink-soft mt-1">{subtitle}</p>
-        )}
-      </div>
+      <h2 className="font-display text-[28px] lg:text-[32px] font-medium tracking-tight mb-5">
+        {title}
+      </h2>
       {children}
     </section>
   );

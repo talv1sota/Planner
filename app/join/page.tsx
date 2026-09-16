@@ -11,7 +11,7 @@ export default async function JoinPage({
     <div className="min-h-screen flex items-center justify-center bg-cream p-6">
       <div className="w-full max-w-sm animate-fade-in text-center">
         <h1 className="font-display text-[36px] font-medium tracking-tight leading-tight">
-          Outing Planner
+          Family Calendar
         </h1>
         <p className="text-ink-soft mt-2 mb-8">
           Enter the family code to get started.

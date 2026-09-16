@@ -222,15 +222,7 @@ export function PlannerApp({
         inviteToken={inviteToken}
       />
 
-      <div className="mx-auto max-w-6xl px-6 lg:px-10 pt-5 flex items-center justify-between gap-4">
-        <div className="flex items-baseline gap-2.5">
-          <h1 className="font-display text-[22px] lg:text-[24px] font-medium tracking-tight">
-            Things to <span className="italic text-ink-soft">do</span>
-          </h1>
-          <span className="hidden sm:inline text-[11px] uppercase tracking-[0.16em] text-ink-mute font-semibold">
-            Shared outing calendar
-          </span>
-        </div>
+      <div className="mx-auto max-w-6xl px-6 lg:px-10 pt-5">
         <ViewToggle value={view} onChange={setView} />
       </div>
 

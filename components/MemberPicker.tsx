@@ -23,7 +23,7 @@ export function MemberPicker({ members, familyId }: { members: PrismaMember[]; f
         <div className="w-full max-w-sm animate-fade-in">
           <div className="text-center mb-8">
             <h1 className="font-display text-[36px] font-medium tracking-tight leading-tight">
-              Outing Planner
+              Family Calendar
             </h1>
             <p className="text-ink-soft mt-2">Set up your profile.</p>
           </div>
@@ -104,7 +104,7 @@ export function MemberPicker({ members, familyId }: { members: PrismaMember[]; f
       <div className="w-full max-w-md animate-fade-in">
         <div className="text-center mb-10">
           <h1 className="font-display text-[36px] font-medium tracking-tight leading-tight">
-            Outing Planner
+            Family Calendar
           </h1>
           <p className="text-ink-soft mt-2">Who are you?</p>
         </div>

@@ -11,7 +11,7 @@ export function ViewToggle({
   onChange: (v: View) => void;
 }) {
   const tabs: { key: View; label: string; icon: React.ReactNode }[] = [
-    { key: "ideas", label: "Ideas", icon: <LayoutGrid size={15} /> },
+    { key: "ideas", label: "List", icon: <LayoutGrid size={15} /> },
     { key: "calendar", label: "Calendar", icon: <Calendar size={15} /> },
     { key: "discover", label: "Discover", icon: <Compass size={15} /> },
   ];

@@ -26,7 +26,7 @@ export function Header({
       <div className="mx-auto max-w-6xl px-6 lg:px-10 py-5 flex items-center gap-4">
         <div className="flex items-baseline gap-2">
           <span className="font-display text-2xl lg:text-[28px] font-medium tracking-tight">
-            Outing Planner
+            Family Calendar
           </span>
         </div>
 

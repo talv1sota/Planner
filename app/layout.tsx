@@ -15,7 +15,7 @@ const sans = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Outing Planner",
+  title: "Family Calendar",
   description: "A shared list of outings and ideas for the family.",
 };
 
