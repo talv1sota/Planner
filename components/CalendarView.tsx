@@ -2,7 +2,10 @@
 
 import { useState, useMemo } from "react";
 import {
+  addDays,
   addMonths,
+  addWeeks,
+  addYears,
   eachDayOfInterval,
   endOfMonth,
   endOfWeek,
@@ -13,13 +16,20 @@ import {
   parseISO,
   startOfMonth,
   startOfWeek,
+  subDays,
   subMonths,
+  subWeeks,
+  subYears,
 } from "date-fns";
 import { ChevronLeft, ChevronRight, Clock, Heart, MapPin, Plus, Repeat, X } from "lucide-react";
 import type { Item } from "@/lib/types";
 import { CATEGORY_BY_KEY } from "@/lib/taxonomy";
 import { AvatarStack } from "./Avatar";
 import { useFamily } from "./FamilyContext";
+import { TimeGrid } from "./TimeGrid";
+import { YearGrid } from "./YearGrid";
+
+type ViewMode = "month" | "week" | "day" | "year";
 
 // Timed items first (chronological), untimed/all-day items after.
 function sortByTime(items: Item[]): Item[] {
@@ -49,12 +59,18 @@ export function CalendarView({
   const { memberById, viewerId } = useFamily();
   const [cursor, setCursor] = useState(() => new Date());
   const [selected, setSelected] = useState<Date | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>("month");
 
   const monthStart = startOfMonth(cursor);
   const monthEnd = endOfMonth(cursor);
   const gridStart = startOfWeek(monthStart, { weekStartsOn: 0 });
   const gridEnd = endOfWeek(monthEnd, { weekStartsOn: 0 });
   const days = eachDayOfInterval({ start: gridStart, end: gridEnd });
+
+  const weekDays = eachDayOfInterval({
+    start: startOfWeek(cursor, { weekStartsOn: 0 }),
+    end: endOfWeek(cursor, { weekStartsOn: 0 }),
+  });
 
   const datedItems = useMemo(
     () => items.filter((i) => i.kind === "dated" && i.date),
@@ -131,39 +147,114 @@ export function CalendarView({
     return { bars: placed, spanIds: new Set(seen.keys()), rows: rowEnds.length };
   }
 
+  const goPrev = () => {
+    if (viewMode === "year") setCursor(subYears(cursor, 1));
+    else if (viewMode === "month") setCursor(subMonths(cursor, 1));
+    else if (viewMode === "week") setCursor(subWeeks(cursor, 1));
+    else setCursor(subDays(cursor, 1));
+  };
+  const goNext = () => {
+    if (viewMode === "year") setCursor(addYears(cursor, 1));
+    else if (viewMode === "month") setCursor(addMonths(cursor, 1));
+    else if (viewMode === "week") setCursor(addWeeks(cursor, 1));
+    else setCursor(addDays(cursor, 1));
+  };
+
+  const headerTitle =
+    viewMode === "year"
+      ? format(cursor, "yyyy")
+      : viewMode === "month"
+        ? format(cursor, "MMMM yyyy")
+        : viewMode === "day"
+          ? format(cursor, "EEEE, MMMM d")
+          : formatWeekRange(weekDays[0], weekDays[6]);
+
   return (
     <div className="mx-auto max-w-[1440px] px-6 lg:px-10 pb-4 lg:pb-4 flex flex-col animate-fade-in lg:h-[calc(100dvh-258px)] lg:min-h-[520px]">
-      <div className="flex items-center justify-between mb-4 shrink-0">
+      <div className="flex items-center justify-between mb-4 shrink-0 flex-wrap gap-3">
         <h2 className="font-display text-[26px] lg:text-[30px] font-medium tracking-tight">
-          {format(cursor, "MMMM yyyy")}
+          {headerTitle}
         </h2>
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => setCursor(subMonths(cursor, 1))}
-            className="h-9 w-9 rounded-full border border-line bg-cream-raised inline-flex items-center justify-center hover:border-line-strong transition"
-            aria-label="Previous month"
-          >
-            <ChevronLeft size={16} />
-          </button>
-          <button
-            type="button"
-            onClick={() => setCursor(new Date())}
-            className="px-3 h-9 rounded-full border border-line bg-cream-raised text-sm hover:border-line-strong transition"
-          >
-            Today
-          </button>
-          <button
-            type="button"
-            onClick={() => setCursor(addMonths(cursor, 1))}
-            className="h-9 w-9 rounded-full border border-line bg-cream-raised inline-flex items-center justify-center hover:border-line-strong transition"
-            aria-label="Next month"
-          >
-            <ChevronRight size={16} />
-          </button>
+        <div className="flex items-center gap-3">
+          <div className="inline-flex items-center rounded-full bg-cream border border-line p-1">
+            {(["day", "week", "month", "year"] as ViewMode[]).map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setViewMode(m)}
+                className={`rounded-full px-3 py-1.5 text-xs font-medium capitalize transition ${
+                  viewMode === m
+                    ? "bg-ink text-cream-raised"
+                    : "text-ink-soft hover:text-ink"
+                }`}
+              >
+                {m}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={goPrev}
+              className="h-9 w-9 rounded-full border border-line bg-cream-raised inline-flex items-center justify-center hover:border-line-strong transition"
+              aria-label={`Previous ${viewMode}`}
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <button
+              type="button"
+              onClick={() => setCursor(new Date())}
+              className="px-3 h-9 rounded-full border border-line bg-cream-raised text-sm hover:border-line-strong transition"
+            >
+              Today
+            </button>
+            <button
+              type="button"
+              onClick={goNext}
+              className="h-9 w-9 rounded-full border border-line bg-cream-raised inline-flex items-center justify-center hover:border-line-strong transition"
+              aria-label={`Next ${viewMode}`}
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
         </div>
       </div>
 
+      {(viewMode === "week" || viewMode === "day") && (
+        <TimeGrid
+          days={viewMode === "day" ? [cursor] : weekDays}
+          itemsOnDay={itemsOnDay}
+          isMultiDaySpan={isMultiDaySpan}
+          isRepeating={isRepeating}
+          onEdit={onEdit}
+          onAddForDate={onAddForDate}
+          onSelectDay={
+            viewMode === "week"
+              ? (d) => {
+                  setCursor(d);
+                  setViewMode("day");
+                }
+              : undefined
+          }
+        />
+      )}
+
+      {viewMode === "year" && (
+        <YearGrid
+          year={cursor.getFullYear()}
+          itemsOnDay={itemsOnDay}
+          onSelectDay={(d) => {
+            setCursor(d);
+            setViewMode("day");
+          }}
+          onSelectMonth={(d) => {
+            setCursor(d);
+            setViewMode("month");
+          }}
+        />
+      )}
+
+      {viewMode === "month" && (
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 flex-1 min-h-0">
         <div className="rounded-[22px] bg-cream-raised border border-line overflow-hidden flex flex-col">
           <div className="grid grid-cols-7 border-b border-line bg-cream shrink-0">
@@ -421,8 +512,17 @@ export function CalendarView({
           </button>
         </aside>
       </div>
+      )}
     </div>
   );
+}
+
+function formatWeekRange(start: Date, end: Date) {
+  const sameMonth = start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear();
+  if (sameMonth) return `${format(start, "MMM d")} – ${format(end, "d, yyyy")}`;
+  const sameYear = start.getFullYear() === end.getFullYear();
+  if (sameYear) return `${format(start, "MMM d")} – ${format(end, "MMM d, yyyy")}`;
+  return `${format(start, "MMM d, yyyy")} – ${format(end, "MMM d, yyyy")}`;
 }
 
 function toIso(d: Date) {
