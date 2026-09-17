@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { signValue } from "@/lib/auth";
+import { FAMILY_COOKIE, COOKIE_OPTS } from "@/lib/viewer";
 
 export async function GET(
   req: NextRequest,
@@ -17,11 +18,6 @@ export async function GET(
   }
 
   const res = NextResponse.redirect(new URL("/", req.url));
-  res.cookies.set("family_token", signValue(family.inviteToken), {
-    httpOnly: true,
-    sameSite: "lax",
-    maxAge: 60 * 60 * 24 * 365,
-    path: "/",
-  });
+  res.cookies.set(FAMILY_COOKIE, signValue(family.inviteToken), COOKIE_OPTS);
   return res;
 }

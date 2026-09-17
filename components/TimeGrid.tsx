@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { format, isSameDay } from "date-fns";
 import { CATEGORY_BY_KEY } from "@/lib/taxonomy";
 import type { Item } from "@/lib/types";
+import { toLocalIso as toIso } from "@/lib/dates";
 import { Repeat } from "lucide-react";
 
 function toMinutes(hhmm: string): number {
@@ -15,12 +16,6 @@ function formatHourLabel(min: number): string {
   const period = h < 12 ? "AM" : "PM";
   const h12 = h % 12 === 0 ? 12 : h % 12;
   return `${h12}${period}`;
-}
-function toIso(d: Date) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
 }
 
 const PX_PER_HOUR = 56;

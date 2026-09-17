@@ -37,7 +37,6 @@ export function PlannerApp({
   members,
   viewerId,
   familyId,
-  familyName,
   inviteToken,
   addedDiscoverIds,
 }: {
@@ -45,7 +44,6 @@ export function PlannerApp({
   members: FamilyMember[];
   viewerId: string;
   familyId: string;
-  familyName: string;
   inviteToken: string;
   addedDiscoverIds: string[];
 }) {

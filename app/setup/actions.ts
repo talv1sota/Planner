@@ -2,6 +2,7 @@
 
 import { randomBytes } from "crypto";
 import { redirect } from "next/navigation";
+import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { setFamilyToken, setViewerId } from "@/lib/viewer";
 
@@ -14,6 +15,10 @@ function generateInviteCode() {
   return s;
 }
 
+function isUniqueConstraintError(e: unknown): boolean {
+  return e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002";
+}
+
 export async function createFamily(data: {
   familyName: string;
   memberName: string;
@@ -24,17 +29,33 @@ export async function createFamily(data: {
   if (!validCode || data.inviteCode !== validCode) {
     return { error: "Invalid invite code." };
   }
+  const familyName = data.familyName.trim();
+  const memberName = data.memberName.trim();
+  if (!familyName || !memberName) {
+    return { error: "Please fill in both names." };
+  }
 
-  const family = await db.family.create({
-    data: { name: data.familyName.trim(), inviteToken: generateInviteCode() },
-  });
+  // inviteToken is unique; a collision is extremely unlikely (31^6 space)
+  // but retry a few times rather than 500ing on the rare hit.
+  let family;
+  for (let attempt = 0; ; attempt++) {
+    try {
+      family = await db.family.create({
+        data: { name: familyName, inviteToken: generateInviteCode() },
+      });
+      break;
+    } catch (e) {
+      if (isUniqueConstraintError(e) && attempt < 5) continue;
+      throw e;
+    }
+  }
 
-  const initial = data.memberName.trim().charAt(0).toUpperCase();
+  const initial = memberName.charAt(0).toUpperCase();
 
   const member = await db.familyMember.create({
     data: {
       familyId: family.id,
-      name: data.memberName.trim(),
+      name: memberName,
       initial,
       color: data.color,
       isOrganizer: true,

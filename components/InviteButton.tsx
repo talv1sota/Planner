@@ -13,9 +13,14 @@ export function InviteButton({ inviteToken }: { inviteToken: string }) {
       : `/join/${inviteToken}`;
 
   const copy = async () => {
-    await navigator.clipboard.writeText(inviteUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(inviteUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard permission denied or unavailable — the link is still
+      // visible and selectable in the input field as a manual fallback.
+    }
   };
 
   return (

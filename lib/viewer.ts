@@ -1,10 +1,10 @@
 import { cookies } from "next/headers";
 import { signValue, verifyValue } from "./auth";
 
-const MEMBER_COOKIE = "viewer_member_id";
-const FAMILY_COOKIE = "family_token";
+export const MEMBER_COOKIE = "viewer_member_id";
+export const FAMILY_COOKIE = "family_token";
 
-const COOKIE_OPTS = {
+export const COOKIE_OPTS = {
   httpOnly: true,
   sameSite: "lax" as const,
   maxAge: 60 * 60 * 24 * 365,

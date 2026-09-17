@@ -1,14 +1,14 @@
 import { randomBytes } from "crypto";
 import { PrismaClient } from "@prisma/client";
+import { toLocalIso } from "../lib/dates";
 
 const db = new PrismaClient();
 
 const today = new Date();
-const iso = (d: Date) => d.toISOString().slice(0, 10);
 const plus = (days: number) => {
   const d = new Date(today);
   d.setDate(d.getDate() + days);
-  return iso(d);
+  return toLocalIso(d);
 };
 
 async function main() {

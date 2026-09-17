@@ -5,6 +5,7 @@ import { Check, ExternalLink, MapPin, Plus, Repeat, X } from "lucide-react";
 import { eachDayOfInterval, format, parseISO } from "date-fns";
 import type { DiscoverEvent } from "@/lib/types";
 import { CATEGORY_BY_KEY, COST_BY_KEY } from "@/lib/taxonomy";
+import { toLocalIso as toIso } from "@/lib/dates";
 
 const COUNTRY_LABEL: Record<DiscoverEvent["country"], string> = {
   NL: "Netherlands",
@@ -14,10 +15,6 @@ const COUNTRY_LABEL: Record<DiscoverEvent["country"], string> = {
 // Beyond this, a day-by-day checkbox picker stops being usable (e.g. a
 // months-long exhibition) — fall back to "whole run" vs. pick-specific-dates.
 const MAX_PICKABLE_RANGE_DAYS = 31;
-
-function toIso(d: Date) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
 
 /** Opens on a Discover card click: full event detail, plus the controls to
  *  choose exactly which date(s) and time to add it for, instead of the old

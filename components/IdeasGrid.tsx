@@ -1,6 +1,7 @@
 "use client";
 
 import type { Item } from "@/lib/types";
+import { todayLocalIso } from "@/lib/dates";
 import { IdeaCard } from "./IdeaCard";
 
 export function IdeasGrid({
@@ -16,7 +17,7 @@ export function IdeasGrid({
   totalCount: number;
   onAdd: () => void;
 }) {
-  const todayIso = new Date().toISOString().slice(0, 10);
+  const todayIso = todayLocalIso();
   const isRepeating = (i: Item) =>
     !!(i.repeatWeekdays?.length || i.repeatDates?.length);
   // A multi-day span (e.g. a festival running several days) belongs on the

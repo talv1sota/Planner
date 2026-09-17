@@ -24,6 +24,7 @@ import {
 import { ChevronLeft, ChevronRight, Clock, Heart, MapPin, Plus, Repeat, X } from "lucide-react";
 import type { Item } from "@/lib/types";
 import { CATEGORY_BY_KEY } from "@/lib/taxonomy";
+import { toLocalIso as toIso } from "@/lib/dates";
 import { AvatarStack } from "./Avatar";
 import { useFamily } from "./FamilyContext";
 import { TimeGrid } from "./TimeGrid";
@@ -553,11 +554,4 @@ function formatWeekRange(start: Date, end: Date) {
   const sameYear = start.getFullYear() === end.getFullYear();
   if (sameYear) return `${format(start, "MMM d")} – ${format(end, "MMM d, yyyy")}`;
   return `${format(start, "MMM d, yyyy")} – ${format(end, "MMM d, yyyy")}`;
-}
-
-function toIso(d: Date) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
 }

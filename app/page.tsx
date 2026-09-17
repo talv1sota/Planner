@@ -32,7 +32,6 @@ export default async function Home() {
       members={family.members}
       viewerId={viewerId!}
       familyId={family.id}
-      familyName={family.name}
       inviteToken={family.inviteToken}
       addedDiscoverIds={addedDiscoverIds}
     />

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { FAMILY_COOKIE, MEMBER_COOKIE } from "@/lib/viewer";
 
 export async function GET(req: NextRequest) {
   const res = NextResponse.redirect(new URL("/join", req.url));
-  res.cookies.delete("family_token");
-  res.cookies.delete("viewer_member_id");
+  res.cookies.delete(FAMILY_COOKIE);
+  res.cookies.delete(MEMBER_COOKIE);
   return res;
 }

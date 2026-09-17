@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { getFamilyToken, getViewerId, setViewerId } from "@/lib/viewer";
 import { DISCOVER_EVENTS } from "@/lib/discoverData";
+import { todayLocalIso } from "@/lib/dates";
 
 async function requireViewer() {
   const id = await getViewerId();
@@ -45,12 +46,14 @@ export async function addNewMember(data: {
   if (!family || family.inviteToken !== familyToken) {
     throw new Error("Not authorized");
   }
+  const name = data.name.trim();
+  if (!name) throw new Error("Name is required");
 
-  const initial = data.name.charAt(0).toUpperCase();
+  const initial = name.charAt(0).toUpperCase();
   const member = await db.familyMember.create({
     data: {
       familyId: data.familyId,
-      name: data.name,
+      name,
       initial,
       color: data.color,
       isOrganizer: false,
@@ -96,11 +99,13 @@ export async function createItem(data: {
 }) {
   const viewer = await requireViewer();
   if (data.familyId !== viewer.familyId) throw new Error("Not authorized");
+  const title = data.title.trim();
+  if (!title) throw new Error("Title is required");
 
   const item = await db.item.create({
     data: {
       familyId: data.familyId,
-      title: data.title,
+      title,
       category: data.category,
       kind: data.kind,
       date: data.date || null,
@@ -149,11 +154,13 @@ export async function updateItem(
   },
 ) {
   await requireItemAccess(itemId);
+  const title = data.title.trim();
+  if (!title) throw new Error("Title is required");
 
   await db.item.update({
     where: { id: itemId },
     data: {
-      title: data.title,
+      title,
       category: data.category,
       kind: data.kind,
       date: data.date || null,
@@ -273,7 +280,7 @@ export async function addDiscoveredEvent(data: {
   // shows up on the calendar. Everything else keeps dated/evergreen as-is.
   const hasWeeklyPattern = !!event.repeatWeekdays?.length;
   const hasDateList = !!event.repeatDates?.length;
-  const todayIso = new Date().toISOString().slice(0, 10);
+  const todayIso = todayLocalIso();
 
   const itemId = await db.$transaction(async (tx) => {
     const item = await tx.item.create({
