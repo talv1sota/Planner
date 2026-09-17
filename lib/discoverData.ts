@@ -597,7 +597,8 @@ export const DISCOVER_EVENTS: DiscoverEvent[] = [
   {
     id: "lambertuskermis-hengelo",
     title: "Lambertuskermis",
-    blurb: "One of the largest fairs in the eastern Netherlands (~150,000 visitors) in the Hengelo city center.",
+    blurb:
+      "One of the largest fairs in the eastern Netherlands (~150,000 visitors) in the Hengelo city center. Open Wed–Thu 13:30–23:00, Fri 13:30–midnight, Sat 10:00–midnight, Sun 12:00–21:00.",
     category: "fairs",
     city: "Hengelo",
     country: "NL",
