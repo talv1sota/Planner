@@ -241,6 +241,7 @@ export function PlannerApp({
             onEdit={openEdit}
             totalCount={optimisticItems.length}
             onAdd={openAdd}
+            onClearFilters={() => setFilters({ ...INITIAL_FILTERS, search: filters.search })}
           />
         ) : view === "calendar" ? (
           <CalendarView

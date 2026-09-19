@@ -10,12 +10,14 @@ export function IdeasGrid({
   onEdit,
   totalCount,
   onAdd,
+  onClearFilters,
 }: {
   items: Item[];
   onToggleInterested: (id: string) => void;
   onEdit: (item: Item) => void;
   totalCount: number;
   onAdd: () => void;
+  onClearFilters: () => void;
 }) {
   const todayIso = todayLocalIso();
   const isRepeating = (i: Item) =>
@@ -65,6 +67,13 @@ export function IdeasGrid({
         <p className="text-sm text-ink-mute mt-1 max-w-xs mx-auto">
           Nothing matches your current filters. Try broadening your search or clearing some filters.
         </p>
+        <button
+          type="button"
+          onClick={onClearFilters}
+          className="mt-4 text-sm text-ink-soft hover:text-ink transition underline-offset-4 hover:underline"
+        >
+          Clear filters
+        </button>
       </div>
     );
   }

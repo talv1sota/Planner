@@ -162,6 +162,15 @@ export function DiscoverView({
           <p className="text-sm text-ink-mute mt-1">
             Try different filters or a different search term.
           </p>
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={clearAll}
+              className="mt-4 text-sm text-ink-soft hover:text-ink transition underline-offset-4 hover:underline"
+            >
+              Clear filters
+            </button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
