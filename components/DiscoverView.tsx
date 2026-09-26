@@ -2,12 +2,18 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Search, X } from "lucide-react";
-import type { CategoryKey, DiscoverEvent } from "@/lib/types";
+import type { CategoryKey, DiscoverEvent, FamilyFriendly } from "@/lib/types";
 import { CATEGORIES } from "@/lib/taxonomy";
 import { DiscoverCard } from "./DiscoverCard";
 import { FilterPill, MultiSelect } from "./FilterPill";
 
-type PopoverKey = "category" | "location" | null;
+type PopoverKey = "category" | "location" | "family" | null;
+
+const FAMILY_OPTIONS: { value: FamilyFriendly; label: string }[] = [
+  { value: "yes", label: "Family-friendly" },
+  { value: "partly", label: "Partly (some days or ages)" },
+  { value: "no", label: "Adults only" },
+];
 
 export function DiscoverView({
   events,
@@ -20,6 +26,7 @@ export function DiscoverView({
 }) {
   const [categories, setCategories] = useState<Set<CategoryKey>>(new Set());
   const [cities, setCities] = useState<Set<string>>(new Set());
+  const [family, setFamily] = useState<Set<FamilyFriendly>>(new Set());
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState<PopoverKey>(null);
 
@@ -42,6 +49,7 @@ export function DiscoverView({
     return events
       .filter((e) => categories.size === 0 || categories.has(e.category))
       .filter((e) => cities.size === 0 || cities.has(e.city))
+      .filter((e) => family.size === 0 || family.has(e.familyFriendly))
       .filter((e) =>
         q
           ? e.title.toLowerCase().includes(q) ||
@@ -57,12 +65,14 @@ export function DiscoverView({
         if (b.kind === "dated") return 1;
         return a.title.localeCompare(b.title);
       });
-  }, [events, categories, cities, search]);
+  }, [events, categories, cities, family, search]);
 
-  const hasActiveFilters = categories.size > 0 || cities.size > 0;
+  const hasActiveFilters =
+    categories.size > 0 || cities.size > 0 || family.size > 0;
   const clearAll = () => {
     setCategories(new Set());
     setCities(new Set());
+    setFamily(new Set());
   };
 
   return (
@@ -112,6 +122,24 @@ export function DiscoverView({
               if (next.has(v)) next.delete(v);
               else next.add(v);
               setCities(next);
+            }}
+          />
+        </FilterPill>
+
+        <FilterPill
+          label={chipCountLabel("Family", family.size)}
+          active={family.size > 0}
+          open={open === "family"}
+          onToggle={() => setOpen(open === "family" ? null : "family")}
+        >
+          <MultiSelect
+            options={FAMILY_OPTIONS}
+            selected={family}
+            onToggle={(v: FamilyFriendly) => {
+              const next = new Set(family);
+              if (next.has(v)) next.delete(v);
+              else next.add(v);
+              setFamily(next);
             }}
           />
         </FilterPill>

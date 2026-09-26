@@ -36,6 +36,24 @@ export const TOWN_IMAGES: Record<string, string> = {
     "https://commons.wikimedia.org/wiki/Special:FilePath/Rheine-Emswehr.jpg?width=800",
   "Münster":
     "https://commons.wikimedia.org/wiki/Special:FilePath/Muenster_Innenstadt.jpg?width=800",
+  Elst:
+    "https://commons.wikimedia.org/wiki/Special:FilePath/Elst%2C_de_Grote_Kerk_RM14948_IMG_3983_2018-06-06_08.56.jpg?width=800",
+  Lingen:
+    "https://commons.wikimedia.org/wiki/Special:FilePath/Lingen%2C_die_evangelisch-reformierte_Kirche_gespiegeld_in_de_ramen_van_die_Kornblume_IMG_7118_2020-08-06_14.08.jpg?width=800",
+  "Osnabrück":
+    "https://commons.wikimedia.org/wiki/Special:FilePath/Osnabr%C3%BCck_aerial.jpg?width=800",
+  Dortmund:
+    "https://commons.wikimedia.org/wiki/Special:FilePath/Alte_Markt_Dortmund.JPG?width=800",
+  Bochum:
+    "https://commons.wikimedia.org/wiki/Special:FilePath/Bergbaumuseum.jpg?width=800",
+  Bielefeld:
+    "https://commons.wikimedia.org/wiki/Special:FilePath/Bielefeld_Theater.jpg?width=800",
+  Hannover:
+    "https://commons.wikimedia.org/wiki/Special:FilePath/Hannover_Blick_Neues_Rathaus_01.jpg?width=800",
+  Bremen:
+    "https://commons.wikimedia.org/wiki/Special:FilePath/Bremen_Rathaus%2C_Roland_und_Dom-blaue-Stunde-2024-msu-8259-.jpg?width=800",
+  Sittard:
+    "https://commons.wikimedia.org/wiki/Special:FilePath/Sittard_Panorama_4.JPG?width=800",
   Zwolle:
     "https://commons.wikimedia.org/wiki/Special:FilePath/Sassenstraat_1-15%2C_Zwolle.jpg?width=800",
   Amsterdam:

@@ -16,6 +16,8 @@ export type CategoryKey =
   | "errands"
   | "other";
 
+export type FamilyFriendly = "yes" | "partly" | "no";
+
 export type CostTier = "free" | "under10" | "10to25" | "25to50" | "50plus";
 
 export type TimeOfDay = "morning" | "afternoon" | "evening" | "allday";
@@ -85,6 +87,8 @@ export type DiscoverEvent = {
   title: string;
   blurb: string;
   category: CategoryKey;
+  /** Whether it suits kids: "partly" = some days/times/ages only (see blurb). */
+  familyFriendly: FamilyFriendly;
   city: string;
   country: "NL" | "DE";
   /** "dated" gets added as a dated Item; "recurring" gets added as evergreen. */
