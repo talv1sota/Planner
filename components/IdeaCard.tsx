@@ -3,7 +3,7 @@
 import { MapPin, CalendarDays, Heart, Repeat, Clock } from "lucide-react";
 import { format, parseISO, isSameDay, isSameMonth } from "date-fns";
 import type { Item } from "@/lib/types";
-import { CATEGORY_BY_KEY, COST_BY_KEY, TIME_BY_KEY } from "@/lib/taxonomy";
+import { CATEGORY_BY_KEY, TIME_BY_KEY } from "@/lib/taxonomy";
 import { getTownImage } from "@/lib/townImages";
 import { Avatar, AvatarStack } from "./Avatar";
 import { useFamily } from "./FamilyContext";
@@ -54,7 +54,6 @@ export function IdeaCard({
 }) {
   const { memberById, viewerId } = useFamily();
   const category = CATEGORY_BY_KEY[item.category];
-  const cost = COST_BY_KEY[item.cost];
   const addedByMember = memberById[item.addedBy];
   const interestedMembers = item.interestedBy
     .map((id) => memberById[id])
@@ -95,11 +94,6 @@ export function IdeaCard({
           <category.icon size={13} />
           {category.label}
         </div>
-        {item.category !== "errands" && (
-          <div className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-cream-raised/90 backdrop-blur px-2.5 py-1 text-[11px] font-semibold text-ink">
-            {cost.shortLabel}
-          </div>
-        )}
       </div>
 
       <div className="flex-1 flex flex-col gap-3 p-4">
